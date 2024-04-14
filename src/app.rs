@@ -1,12 +1,21 @@
+use std::sync::{atomic::{AtomicBool, Ordering}, Arc};
+
+use eframe::WindowBuilder;
+use egui::{ScrollArea, Vec2, Window};
+
+use crate::{dbdriver, actor::Actor};
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     // Example stuff:
     label: String,
-
+    actors: String,
     #[serde(skip)] // This how you opt-out of serialization of a field
+    tables: Vec<String>,
     value: f32,
+    show_deferred_viewport: Arc<AtomicBool>,
 }
 
 impl Default for TemplateApp {
@@ -15,6 +24,11 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            tables: vec!["actor".to_owned(),"performance".to_owned(),"performance_actors".to_owned(),"play".to_owned(),"posters".to_owned(),"stage".to_owned(),"theater".to_owned(),"ticket".to_owned(),
+            "viewer".to_owned(),"viewer_ticket".to_owned()],
+            actors: String::new(),
+            show_deferred_viewport: Arc::new(AtomicBool::new(false)),
+            
         }
     }
 }
@@ -67,17 +81,28 @@ impl eframe::App for TemplateApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("eframe template");
+            ui.heading("Database");
+            // let v: Vec<String> = vec!["actor".to_owned(),"performance".to_owned(),"performance_actors".to_owned(),"
+            // play".to_owned(),"posters".to_owned(),"stage".to_owned(),"theater".to_owned(),"ticket".to_owned(),
+            // "viewer".to_owned(),"viewer_ticket".to_owned()];
+            let mut show_deferred_viewport = self.show_deferred_viewport.load(Ordering::Relaxed);
+            ui.vertical_centered(|ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    // for a in &self.tables{
+                    if ui.add(egui::Button::new(self.tables.get(0).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
 
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(&mut self.label);
+                        // ui.checkbox(&mut show_deferred_viewport, "Show deferred child viewport");
+                        show_deferred_viewport=true;
+                        self.show_deferred_viewport
+                            .store(show_deferred_viewport, Ordering::Relaxed);
+                        self.actors = dbdriver::main().unwrap();
+                    }
+                    
+                });
+
             });
 
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
+             
 
             ui.separator();
 
@@ -87,23 +112,50 @@ impl eframe::App for TemplateApp {
             ));
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
+                // powered_by_egui_and_eframe(ui);
                 egui::warn_if_debug_build(ui);
             });
         });
-    }
-}
+        if self.show_deferred_viewport.load(Ordering::Relaxed) {
+            let show_deferred_viewport = self.show_deferred_viewport.clone();
+            let actors = self.actors.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("deferred_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Deferred Viewport")
+                    .with_inner_size([200.0, 100.0]),
+                move |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Deferred,
+                        "This egui backend doesn't support multiple viewports"
+                    );
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
-}
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Hello from deferred viewport");
+                        ui.label(&actors);
+
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent to close us.
+                        show_deferred_viewport.store(false, Ordering::Relaxed);
+                    }
+                },
+            );
+        }
+    }
+    }
+
+
+// fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
+//     ui.horizontal(|ui| {
+//         ui.spacing_mut().item_spacing.x = 0.0;
+//         ui.label("Powered by ");
+//         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+//         ui.label(" and ");
+//         ui.hyperlink_to(
+//             "eframe",
+//             "https://github.com/emilk/egui/tree/master/crates/eframe",
+//         );
+//         ui.label(".");
+//     });
+// }
