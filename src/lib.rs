@@ -12,3 +12,6 @@ mod actor;
 pub use actor::Actor;
 mod performance_actors;
 pub use performance_actors::PerformanceActors;
+mod play;
+mod poster;
+mod stage;
