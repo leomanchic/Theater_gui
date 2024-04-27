@@ -21,13 +21,13 @@ impl Theater   {
         }
     }
     pub fn get_tid(&self) -> i32{
-        self.stage_id
+        self.theater_id
     }
     pub fn get_name(&self) -> String{
-        self.name
+        self.name.clone()
     }
     pub fn get_address(&self) -> String{
-        self.address
+        self.address.clone()
     }
     pub fn get_capacity(&self) -> i32{
         self.capacity

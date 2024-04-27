@@ -5,15 +5,22 @@ use postgres::{Client, NoTls};
 use tokio::time::sleep;
 use tokio_postgres;
 use std::error::Error;
-use std::{thread, time};
+use std::{env, thread, time};
 use std::time::Duration;
 
 use crate::performance::Performance;
 use crate::play::Play;
 use crate::stage::Stage;
+use crate::ticket::{self, Ticket};
+use crate::viewer::Viewer;
+use crate::viewer_ticket::ViewerTicket;
 use crate::Actor;
 use crate::PerformanceActors;
 use crate::poster::Poster;
+use crate::theater::Theater;
+
+
+thread_local!(static CONF: String  = env::var("DATABASE_CONF").unwrap());
 
 
 // #[tokio::main]
@@ -37,13 +44,13 @@ pub  async fn actors() -> Result<Vec<Actor>, Box<dyn Error>>{
     // thread::sleep(time::Duration::from_secs(5));
 
     let (client, connection) =
-        tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+        tokio_postgres::connect(&CONF.with(|text| { text.clone()}), NoTls).await?;
         tokio::spawn(async move {
                 if let Err(e) = connection.await {
                     eprintln!("connection error: {}", e);
                 }
             });
-        
+        // CONF.with(|text| { *text.clone()});
         let mut actors: Vec<Actor> = vec![];
         for row in client
         .query("SELECT actor_id, name, surname, role  FROM actor", &[])
@@ -66,22 +73,9 @@ pub async  fn performance() -> Result<Vec<Performance>, Box<dyn Error>>{
     // let mut  client = Client::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls)?;
 
     
-    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+    let (client, connection) = tokio_postgres::connect(&CONF.with(|text| { text.clone()}), NoTls).await?;
     let mut performance: Vec<Performance> = vec![];
-        // for row in client.query("SELECT performance_id, play_id, stage_id, start_datetime  FROM performance", &[])?{
-        //     let per_id: i32 = row.get(0);
-        //     let p_id: i32 = row.get(1);
-        //     let s_id: i32 = row.get(2);
-        //     let date: NaiveDateTime =row.get(3);
-        //     let a = Performance::new(per_id , p_id, s_id, date.to_string());
-        //     println!("found person: {:?} ", a);
-        //     performance.push(a);
-        // }
 
-        // Ok(performance)
-
-
-       
         tokio::spawn(async move {
                 if let Err(e) = connection.await {
                     eprintln!("connection error: {}", e);
@@ -220,6 +214,9 @@ pub  async fn stage() -> Result<Vec<Stage>, Box<dyn Error>>{
     Ok(stage)
 
 }
+
+
+
 // #[tokio::main]
 // pub  async fn theater() -> Result<Vec<PerformanceActors>, Box<dyn Error>>{
 //     "select theater_id, name, address, capacity from theater"
@@ -238,6 +235,118 @@ pub  async fn stage() -> Result<Vec<Stage>, Box<dyn Error>>{
 
 // }
     
+pub  async fn theater() -> Result<Vec<Theater>, Box<dyn Error>>{
+    
+
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    
+    let mut theater: Vec<Theater> = vec![];
+        for row in client.query("select theater_id,name, address, capacity from theater", &[]).await?{
+            let theater_id: i32 = row.get(0);
+            let name: String = row.get(1);
+            let address: String = row.get(2);
+            let capacity: i32 =row.get(3);
+            let a = Theater::new(theater_id ,name, address, capacity);
+            println!("found theater: {:?} ", a);
+            theater.push(a);
+        }
+    
+    Ok(theater)
+
+}
+
+
+pub  async fn ticket() -> Result<Vec<Ticket>, Box<dyn Error>>{
+    
+
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    
+    let mut ticket: Vec<Ticket> = vec![];
+        for row in client.query("select ticket_id, performance_id, seat_number, date, cost, status from ticket", &[]).await?{
+            let ticket_id: i32 = row.get(0);
+            let per_id: i32 = row.get(1);
+            let seat_number: i32 = row.get(2);
+            let date: NaiveDate =row.get(3);
+            let  cost: i32 = row.get(4);
+            let status: String = row.get(5);
+            let a = Ticket::new(ticket_id,per_id, seat_number, date.to_string(), cost, status);
+            println!("found theater: {:?} ", a);
+            ticket.push(a);
+        }
+    
+    Ok(ticket)
+
+}
+
+
+
+pub  async fn viewer_ticket() -> Result<Vec<ViewerTicket>, Box<dyn Error>>{
+    
+
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    
+    let mut vticket: Vec<ViewerTicket> = vec![];
+        for row in client.query("select viewer_viewer_id, ticket_ticket_id, bought_date, vi_ti_id from viewer_ticket", &[]).await?{
+            let viewer_viewer_id: i32 = row.get(0);
+            let ticket_ticket_id: i32 = row.get(1);
+            let bought_date: NaiveDate = row.get(2);
+            let vi_ti_id: i32 =row.get(3);
+            let a = ViewerTicket::new(viewer_viewer_id, ticket_ticket_id, bought_date.to_string(), vi_ti_id);
+            println!("found theater: {:?} ", a);
+            vticket.push(a);
+        }
+    
+    Ok(vticket)
+
+}
+
+
+
+pub  async fn viewer() -> Result<Vec<Viewer>, Box<dyn Error>>{
+    
+
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    
+    let mut viewer: Vec<Viewer> = vec![];
+        for row in client.query("select viewer_id, name, email, phone from viewer", &[]).await?{
+            let viewer_id: i32 = row.get(0);
+            let name: String = row.get(1);
+            let email: String = row.get(2);
+            let phone: String =row.get(3);
+            let a = Viewer::new(viewer_id,name, email, phone);
+            println!("found viewer: {:?} ", a);
+            viewer.push(a);
+        }
+    
+    Ok(viewer)
+
+}
+
+
 
 
 pub  fn  writer(statment: String, params: Vec<String>) -> Result<(),Box<dyn Error>>{

@@ -5,6 +5,8 @@ authors = ["leo"]
 edition = "2021"
 rust-version = "1.72"
 
+# [workspace]
+# members = [".", "tests"]
 
 [dependencies]
 egui = "0.27.0"

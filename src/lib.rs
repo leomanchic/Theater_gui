@@ -15,3 +15,7 @@ pub use performance_actors::PerformanceActors;
 mod play;
 mod poster;
 mod stage;
+mod theater;
+mod ticket;
+mod viewer;
+mod viewer_ticket;  

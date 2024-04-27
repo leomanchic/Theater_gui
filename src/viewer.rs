@@ -24,13 +24,13 @@ impl Viewer   {
         self.viewer_id
     }
     pub fn get_name(&self) -> String{
-        self.name
+        self.name.clone()
     }
     pub fn get_email(&self) -> String{
-        self.email
+        self.email.clone()
     }
     pub fn get_phone(&self) -> String{
-        self.phone
+        self.phone.clone()
     }
     // pub  fn write(&self) {
     //    dbdriver::writer( "INSERT INTO actor (name, surname,role) VALUES ($1, $2, $3)".to_string(), vec![self.get_name(),self.get_surname(),self.get_role()]).unwrap();

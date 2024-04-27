@@ -27,7 +27,7 @@ impl ViewerTicket   {
         self.ticket_ticket_id
     }
     pub fn get_bdate(&self) -> String{
-        self.bought_date
+        self.bought_date.clone()
     }
     pub fn get_vtid(&self) -> i32{
         self.vi_ti_id

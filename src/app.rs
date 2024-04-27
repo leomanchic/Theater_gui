@@ -1,14 +1,26 @@
 use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread, time::{self, Duration}};
 
 use eframe::WindowBuilder;
-use egui::{FontData, FontDefinitions, ScrollArea, Vec2, Window};
+use egui::{mutex::Mutex, FontData, FontDefinitions, ScrollArea, Vec2, Window};
 
 use egui_extras::{TableBuilder, Column};
 use serde::de::value;
-use tokio::time::sleep;
+use tokio::{select, time::sleep};
 
 
-use crate::{actor::Actor, dbdriver, performance, performance_actors, play::Play, poster::{self, Poster}, stage::{self, Stage}, Performance, PerformanceActors};
+#[derive(serde::Deserialize, serde::Serialize)]
+
+struct Views{
+    poster_vieport: Arc<AtomicBool>,
+    actors_viewport: Arc<AtomicBool>,
+    performance_viewport: Arc<AtomicBool>,
+    performance_actors_viewport:Arc<AtomicBool>,
+    play_viewport: Arc<AtomicBool>,
+    stage_viewport: Arc<AtomicBool>,
+
+}
+
+use crate::{actor::Actor, dbdriver, performance, performance_actors, play::Play, poster::{self, Poster}, stage::{self, Stage}, theater::{self, Theater}, ticket::{self, Ticket}, viewer::{self, Viewer}, viewer_ticket::ViewerTicket, Performance, PerformanceActors};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -22,6 +34,10 @@ pub struct TemplateApp {
     plays: Arc<Vec<Play>>,
     poster: Arc<Vec<Poster>>,
     stage: Arc<Vec<Stage>>,
+    theater: Arc<Vec<Theater>>,
+    ticket: Arc<Vec<Ticket>>,
+    viewer: Arc<Vec<Viewer>>,
+    vticket: Arc<Vec<ViewerTicket>>,
 
     poster_vieport: Arc<AtomicBool>,
     actors_viewport: Arc<AtomicBool>,
@@ -29,7 +45,12 @@ pub struct TemplateApp {
     performance_actors_viewport:Arc<AtomicBool>,
     play_viewport: Arc<AtomicBool>,
     stage_viewport: Arc<AtomicBool>,
+    ticket_viewport: Arc<AtomicBool>,
+    theater_viewport: Arc<AtomicBool>,
+    viewer_viewport: Arc<AtomicBool>,
+    vticket_viewport: Arc<AtomicBool>,
     
+    // views: Views,
     tables: Vec<String>,
 }
 
@@ -45,14 +66,22 @@ impl Default for TemplateApp {
             plays:Arc::new(Vec::new()),
             poster: Arc::new(Vec::new()),
             stage: Arc::new(Vec::new()),
-            
+            theater: Arc::new(Vec::new()),
+            ticket: Arc::new(Vec::new()),
+            viewer: Arc::new(Vec::new()),
+            vticket: Arc::new(Vec::new()),
+
+
             poster_vieport: Arc::new(AtomicBool::new(false)),
             performance_viewport: Arc::new(AtomicBool::new(false)),
             actors_viewport: Arc::new(AtomicBool::new(false)),
             performance_actors_viewport: Arc::new(AtomicBool::new(false)),
             play_viewport:  Arc::new(AtomicBool::new(false)),
             stage_viewport: Arc::new(AtomicBool::new(false)),
-            
+            theater_viewport:  Arc::new(AtomicBool::new(false)),
+            ticket_viewport: Arc::new(AtomicBool::new(false)),
+            viewer_viewport: Arc::new(AtomicBool::new(false)),
+            vticket_viewport: Arc::new(AtomicBool::new(false)),
         }
     }
 }
@@ -120,43 +149,46 @@ impl eframe::App for TemplateApp {
             let mut performance_actors_viewport = self.performance_actors_viewport.load(Ordering::Relaxed);
             let mut play_viewport = self.play_viewport.load(Ordering::Relaxed);
             let mut poster_viewport = self.poster_vieport.load(Ordering::Relaxed);
-            let mut stage_viewport = self.stage_viewport.load(Ordering::Relaxed);
+            let mut stage_viewport: bool = self.stage_viewport.load(Ordering::Relaxed);
+            let mut theater_viewport: bool = self.theater_viewport.load(Ordering::Relaxed);
+            let mut ticket_viewport: bool = self.ticket_viewport.load(Ordering::Relaxed);
+            let mut viewer_viewport: bool = self.viewer_viewport.load(Ordering::Relaxed);
+            let mut vticket_viewport: bool = self.vticket_viewport.load(Ordering::Relaxed);
 
 
-
-
-
+            
             ui.vertical_centered(|ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let runtime = tokio::runtime::Runtime::new();
                     runtime.unwrap().block_on( async {
                     // for a in &self.tables{
                     if ui.add(egui::Button::new(self.tables.get(0).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
-                        // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                        actors_viewport=true;
-                        self.actors_viewport
-                            .store(actors_viewport, Ordering::Relaxed);
+                                // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
+                                actors_viewport=true;
+                                self.actors_viewport
+                                    .store(actors_viewport, Ordering::Relaxed);
 
-                        self.actors = Arc::new(dbdriver::actors().await.unwrap());
-                    }
+                                 self.actors = Arc::new(dbdriver::actors().await.unwrap());
+                            }
 
                     if ui.add(egui::Button::new(self.tables.get(1).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
 
-                        // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                        performance_viewport=true;
-                        self.performance_viewport
-                            .store(performance_viewport, Ordering::Relaxed);
-                        self.performance = Arc::new(dbdriver::performance().await.unwrap());
-                    }
+                                // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
+                                performance_viewport=true;
+                                self.performance_viewport
+                                    .store(performance_viewport, Ordering::Relaxed);
+                                self.performance =  Arc::new(dbdriver::performance().await.unwrap())
+                            }
 
                     if ui.add(egui::Button::new(self.tables.get(2).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
 
-                        // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                        performance_actors_viewport=true;
-                        self.performance_actors_viewport
-                            .store(performance_actors_viewport, Ordering::Relaxed);
-                        self.performance_actors = Arc::new(dbdriver::performance_actors().await.unwrap());
+                                // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
+                                performance_actors_viewport=true;
+                                self.performance_actors_viewport
+                                    .store(performance_actors_viewport, Ordering::Relaxed);
+                                self.performance_actors =  Arc::new(dbdriver::performance_actors().await.unwrap());
                     }
+                   
 
                     if ui.add(egui::Button::new(self.tables.get(3).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
 
@@ -165,13 +197,13 @@ impl eframe::App for TemplateApp {
                         self.play_viewport
                             .store(play_viewport, Ordering::Relaxed);
                         self.plays = Arc::new(dbdriver::play().await.unwrap());
-                    }
+                         }
                     if ui.add(egui::Button::new(self.tables.get(4).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
                         poster_viewport=true;
                         self.poster_vieport
                             .store(poster_viewport, Ordering::Relaxed);
                         self.poster = Arc::new(dbdriver::poster().await.unwrap());
-                    }   
+                     }   
                     if ui.add(egui::Button::new(self.tables.get(5).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
                         stage_viewport=true;
                         self.stage_viewport
@@ -180,22 +212,37 @@ impl eframe::App for TemplateApp {
                         
                     }
                     if ui.add(egui::Button::new(self.tables.get(6).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
-
+                        theater_viewport=true;
+                        self.theater_viewport
+                            .store(theater_viewport, Ordering::Relaxed);
+                        self.theater = Arc::new(dbdriver::theater().await.unwrap());
+                        
                       
                     }
                     if ui.add(egui::Button::new(self.tables.get(7).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
-
+                        ticket_viewport=true;
+                        self.ticket_viewport
+                            .store(ticket_viewport, Ordering::Relaxed);
+                        self.theater = Arc::new(dbdriver::theater().await.unwrap());
+                        
                       
                     }
                     if ui.add(egui::Button::new(self.tables.get(8).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
+                        viewer_viewport=true;
+                        self.viewer_viewport
+                            .store(viewer_viewport, Ordering::Relaxed);
+                        self.viewer = Arc::new(dbdriver::viewer().await.unwrap());
 
                       
                     }
                     if ui.add(egui::Button::new(self.tables.get(9).unwrap()).min_size(Vec2{x: 200.0, y:50.0})).clicked() {
-
+                        vticket_viewport=true;
+                        self.vticket_viewport
+                            .store(vticket_viewport, Ordering::Relaxed);
+                        self.vticket = Arc::new(dbdriver::viewer_ticket().await.unwrap());
                       
                     }
-                })
+                });
                     
                     
                 });
@@ -209,6 +256,283 @@ impl eframe::App for TemplateApp {
                 egui::warn_if_debug_build(ui);
             });
         });
+
+        if self.vticket_viewport.load(Ordering::Relaxed) {
+            let vticket_viewport = self.vticket_viewport.clone();
+            let vticket = self.vticket.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("vticket"),
+                egui::ViewportBuilder::default()
+                    .with_title("vticket")
+                    .with_inner_size([200.0, 100.0]),
+                move |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Deferred,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+
+                        TableBuilder::new(ui)
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .header(20.0, |mut header| {
+                            header.col(|ui| {
+                                ui.heading("viewer_viewer_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("ticket_ticket_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("bought_date");
+                            });
+                            header.col(|ui| {
+                                ui.heading("vi_ti_id");
+                            });
+                        })
+                        .body(|mut body| {
+                            for i in &*vticket{
+                                body.row(30.0, |mut row| {
+                                    row.col(|ui| {
+                                        ui.label(&i.get_vvid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_ttid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_bdate());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_vtid().to_string());
+                                    });
+                                });
+                        }
+                        });
+                    });
+
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent to close us.
+                        vticket_viewport.store(false, Ordering::Relaxed);
+                    }
+                },
+            );
+        }
+
+        if self.viewer_viewport.load(Ordering::Relaxed) {
+            let viewer_viewport = self.viewer_viewport.clone();
+            let viewer = self.viewer.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("viewer"),
+                egui::ViewportBuilder::default()
+                    .with_title("viewer")
+                    .with_inner_size([200.0, 100.0]),
+                move |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Deferred,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+
+                        TableBuilder::new(ui)
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .header(20.0, |mut header| {
+                            header.col(|ui| {
+                                ui.heading("viewer_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("name");
+                            });
+                            header.col(|ui| {
+                                ui.heading("email");
+                            });
+                            header.col(|ui| {
+                                ui.heading("phone");
+                            });
+                        })
+                        .body(|mut body| {
+                            for i in &*viewer{
+                                body.row(30.0, |mut row| {
+                                    row.col(|ui| {
+                                        ui.label(&i.get_vid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_name());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_email());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_phone());
+                                    });
+                                });
+                        }
+                        });
+                    });
+
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent to close us.
+                        viewer_viewport.store(false, Ordering::Relaxed);
+                    }
+                },
+            );
+        }
+
+        
+        if self.ticket_viewport.load(Ordering::Relaxed) {
+            let ticket_viewport = self.ticket_viewport.clone();
+            let ticket = self.ticket.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("ticket"),
+                egui::ViewportBuilder::default()
+                    .with_title("ticket")
+                    .with_inner_size([200.0, 100.0]),
+                move |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Deferred,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+
+                        TableBuilder::new(ui)
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .header(20.0, |mut header| {
+                            header.col(|ui| {
+                                ui.heading("ticket_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("performance_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("seat_number");
+                            });
+                            header.col(|ui| {
+                                ui.heading("date");
+                            });
+                            header.col(|ui| {
+                                ui.heading("cost");
+                            });
+                            header.col(|ui| {
+                                ui.heading("status");
+                            });
+                        })
+                        .body(|mut body| {
+                            for i in &*ticket{
+                                body.row(30.0, |mut row| {
+                                    row.col(|ui| {
+                                        ui.label(&i.get_tid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_pid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_snum().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_date());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_cost().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_status());
+                                    });
+                                });
+                        }
+                        });
+                    });
+
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent to close us.
+                        ticket_viewport.store(false, Ordering::Relaxed);
+                    }
+                },
+            );
+        }
+
+        if self.theater_viewport.load(Ordering::Relaxed) {
+            let theater_viewport = self.theater_viewport.clone();
+            let theater = self.theater.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("theater"),
+                egui::ViewportBuilder::default()
+                    .with_title("theater")
+                    .with_inner_size([200.0, 100.0]),
+                move |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Deferred,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+
+                        TableBuilder::new(ui)
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .header(20.0, |mut header| {
+                            header.col(|ui| {
+                                ui.heading("theater_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("name");
+                            });
+                            header.col(|ui| {
+                                ui.heading("address");
+                            });
+                            header.col(|ui| {
+                                ui.heading("capacity");
+                            });
+                        })
+                        .body(|mut body| {
+                            for i in &*theater{
+                                body.row(30.0, |mut row| {
+                                    row.col(|ui| {
+                                        ui.label(&i.get_tid().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_name());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_address());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.get_capacity().to_string());
+                                    });
+                                });
+                        }
+                        });
+                    });
+
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent to close us.
+                        theater_viewport.store(false, Ordering::Relaxed);
+                    }
+                },
+            );
+        }
+
+      
 
         if self.stage_viewport.load(Ordering::Relaxed) {
             let stage_viewport = self.stage_viewport.clone();
