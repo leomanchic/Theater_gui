@@ -349,21 +349,19 @@ pub  async fn viewer() -> Result<Vec<Viewer>, Box<dyn Error>>{
 
 
 
-pub  fn  writer(statment: String, params: Vec<String>) -> Result<(),Box<dyn Error>>{
-    let mut client =Client::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls)?;
+pub async  fn  writer(statment: String) -> Result<(),Box<dyn Error>>{
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls).await?;
 
-    // The connection object performs the actual communication with the database,
-    // so spawn it off to run on its own.
-        // tokio::spawn(async move {
-        //     if let Err(e) = connection.await {
-        //         eprintln!("connection error: {}", e);
-        //     }
-        // });
-        let vec_of_to_sql: Vec<&(dyn ToSql + Sync)> = params.iter().map(|s| s as &(dyn ToSql + Sync)).collect();
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    // let vec_of_to_sql: Vec<&(dyn ToSql + Sync)> = params.iter().map(|s| s as &(dyn ToSql + Sync)).collect();
 
         client.execute(
             &statment,
-            &vec_of_to_sql,
-        )?;
+            &[],
+        ).await?;
         Ok(())
 }

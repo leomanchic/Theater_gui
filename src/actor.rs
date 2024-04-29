@@ -34,9 +34,9 @@ impl Actor {
     pub fn get_role(&self) -> String{
         self.role.clone()
     }
-    pub  fn write(&self) {
-       dbdriver::writer( "INSERT INTO actor (name, surname,role) VALUES ($1, $2, $3)".to_string(), vec![self.get_name(),self.get_surname(),self.get_role()]).unwrap();
-    }
+    // pub  fn write(&self) {
+    //    dbdriver::writer( "INSERT INTO actor (name, surname,role) VALUES ($1, $2, $3)".to_string(), vec![self.get_name(),self.get_surname(),self.get_role()]).unwrap();
+    // }
     pub fn drop(mut self){
         println!("droppint");
     }

@@ -8,6 +8,7 @@ pub use dbdriver::actors;
 pub use dbdriver::performance;
 pub use dbdriver::performance_actors;
 pub use performance::Performance;
+pub use dbdriver::writer;
 mod actor;
 pub use actor::Actor;
 mod performance_actors;

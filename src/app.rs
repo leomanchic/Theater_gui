@@ -1,7 +1,7 @@
-use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread, time::{self, Duration}};
+use std::{cell::Cell, sync::{atomic::{AtomicBool, Ordering}, Arc}, thread, time::{self, Duration}};
 
 use eframe::WindowBuilder;
-use egui::{mutex::Mutex, FontData, FontDefinitions, ScrollArea, Vec2, Window};
+use egui::{FontData, FontDefinitions, ScrollArea, Vec2, Window};
 
 use egui_extras::{TableBuilder, Column};
 use serde::de::value;
@@ -86,22 +86,53 @@ impl Default for TemplateApp {
     }
 }
 
+fn setup_custom_fonts(ctx: &egui::Context) {
+    // Start with the default fonts (we will be adding to them rather than replacing them).
+    let mut fonts = egui::FontDefinitions::default();
+
+    let mut font = FontDefinitions::default();
+    font.font_data.insert(
+        String::from("cfonts"),
+        FontData::from_static(include_bytes!("../cfonts.ttf")),
+    );
+    ctx.set_fonts(font);
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .insert(0, "cfonts".to_owned());
+
+        // Put my font as last fallback for monospace:
+            fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .push("cfonts".to_owned());
+
+        // Tell egui to use these fonts:
+        ctx.set_fonts(fonts);
+}
+
+
 impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-        let mut font = FontDefinitions::default();
-        font.font_data.insert(
-            String::from("AnimeAcev3"),
-            FontData::from_static(include_bytes!("../AnimeAcev3.ttf")),
-        );
-        cc.egui_ctx.set_fonts(font);
+       
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
+
+        
+        // Install my own font (maybe supporting non-latin characters).
+        // .ttf and .otf files supported.
+      
+        setup_custom_fonts(&cc.egui_ctx);
+        // Put my font first (highest priority) for proportional text:
+    
 
         Default::default()
     }
@@ -133,6 +164,9 @@ impl eframe::App for TemplateApp {
                 }
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
+                let m =  egui::Button::new("Click me");
+                ui.add(m).clicked();
+               
             });
         });
 
@@ -142,7 +176,7 @@ impl eframe::App for TemplateApp {
             // let v: Vec<String> = vec!["actor".to_owned(),"performance".to_owned(),"performance_actors".to_owned(),"
             // play".to_owned(),"posters".to_owned(),"stage".to_owned(),"theater".to_owned(),"ticket".to_owned(),
             // "viewer".to_owned(),"viewer_ticket".to_owned()];
-
+  
 
             let mut actors_viewport = self.actors_viewport.load(Ordering::Relaxed);
             let mut performance_viewport = self.performance_viewport.load(Ordering::Relaxed);
@@ -274,11 +308,7 @@ impl eframe::App for TemplateApp {
                     egui::CentralPanel::default().show(ctx, |ui| {
                         egui::ScrollArea::vertical().show(ui, |ui| {
 
-                        TableBuilder::new(ui)
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
+                        TableBuilder::new(ui).columns(Column::auto().resizable(true),4usize)
                         .header(20.0, |mut header| {
                             header.col(|ui| {
                                 ui.heading("viewer_viewer_id");
@@ -339,11 +369,7 @@ impl eframe::App for TemplateApp {
                     egui::CentralPanel::default().show(ctx, |ui| {
                         egui::ScrollArea::vertical().show(ui, |ui| {
 
-                        TableBuilder::new(ui)
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
-                        .column(Column::auto().resizable(true))
+                        TableBuilder::new(ui).columns(Column::auto().resizable(true), 4usize)
                         .header(20.0, |mut header| {
                             header.col(|ui| {
                                 ui.heading("viewer_id");
@@ -728,7 +754,7 @@ impl eframe::App for TemplateApp {
                 },
             );
         }
-
+        
         if self.actors_viewport.load(Ordering::Relaxed) {
             let actors_viewport = self.actors_viewport.clone();
             let actors = self.actors.clone();
@@ -745,7 +771,6 @@ impl eframe::App for TemplateApp {
 
                     egui::CentralPanel::default().show(ctx, |ui| {
                         egui::ScrollArea::vertical().show(ui, |ui| {
-
                         TableBuilder::new(ui)
                         .column(Column::auto().resizable(true))
                         .column(Column::auto().resizable(true))
@@ -926,5 +951,7 @@ impl eframe::App for TemplateApp {
                 },
             );
         }
+       
+      
     }
 }
