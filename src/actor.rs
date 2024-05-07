@@ -5,16 +5,14 @@ use crate::dbdriver;
 #[derive(Debug,Clone)]
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Actor{
-    actor_id: i32,
-    name: String,
-    surname: String,
-    role: String,
+    actor_id: Option<i32>,
+    name: Option<String>,
+    surname: Option<String>,
+    role: Option<String>,
 }
 
-
-
 impl Actor {
-   pub  fn new(actor_id: i32 ,name: String , surname: String, role: String) -> Self {
+   pub  fn new(actor_id: Option<i32> ,name: Option<String> , surname: Option<String> , role: Option<String> ) -> Self {
         Self {
             actor_id,
             name,
@@ -23,16 +21,16 @@ impl Actor {
         }
     }
     pub fn get_id(&self) -> i32{
-        self.actor_id
+        self.actor_id.unwrap()
     }
     pub fn get_name(&self) -> String{
-        self.name.clone()
+        self.name.clone().unwrap()
     }
     pub fn get_surname(&self) -> String{
-        self.surname.clone()
+        self.surname.clone().unwrap()
     }
     pub fn get_role(&self) -> String{
-        self.role.clone()
+        self.role.clone().unwrap()
     }
     // pub  fn write(&self) {
     //    dbdriver::writer( "INSERT INTO actor (name, surname,role) VALUES ($1, $2, $3)".to_string(), vec![self.get_name(),self.get_surname(),self.get_role()]).unwrap();

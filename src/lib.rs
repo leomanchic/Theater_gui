@@ -20,3 +20,5 @@ mod theater;
 mod ticket;
 mod viewer;
 mod viewer_ticket;  
+mod dbworker;
+pub use dbworker::querry;
