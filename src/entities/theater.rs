@@ -1,7 +1,3 @@
-use serde::de::Error;
-
-use crate::dbdriver;
-
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Theater {
     theater_id: Option<i32>,

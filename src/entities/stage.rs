@@ -1,7 +1,3 @@
-use serde::de::Error;
-
-use crate::dbdriver;
-
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Stage {
     stage_id: Option<i32>,
@@ -24,7 +20,7 @@ impl Stage {
         self.theater_id.unwrap_or_default()
     }
     pub fn get_capacity(&self) -> i32 {
-        self.capacity.unwrap_or_default()   
+        self.capacity.unwrap_or_default()
     }
     // pub  fn write(&self) {
     //    dbdriver::writer( "INSERT INTO actor (name, surname,role) VALUES ($1, $2, $3)".to_string(), vec![self.get_name(),self.get_surname(),self.get_role()]).unwrap();

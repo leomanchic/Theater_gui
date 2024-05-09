@@ -1,18 +1,18 @@
-use serde::de::Error;
-
-use crate::dbdriver;
-
-#[derive(Debug,Clone)]
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct Viewer{
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct Viewer {
     viewer_id: Option<i32>,
     name: Option<String>,
     email: Option<String>,
     phone: Option<String>,
 }
 
-impl Viewer   {
-    pub  fn new(viewer_id: Option<i32> ,name: Option<String> ,email: Option<String>, phone: Option<String>) -> Self {
+impl Viewer {
+    pub fn new(
+        viewer_id: Option<i32>,
+        name: Option<String>,
+        email: Option<String>,
+        phone: Option<String>,
+    ) -> Self {
         Self {
             viewer_id,
             name,
@@ -20,16 +20,16 @@ impl Viewer   {
             phone,
         }
     }
-    pub fn get_vid(&self) -> i32{
+    pub fn get_vid(&self) -> i32 {
         self.viewer_id.unwrap()
     }
-    pub fn get_name(&self) -> String{
+    pub fn get_name(&self) -> String {
         self.name.clone().unwrap()
     }
-    pub fn get_email(&self) -> String{
+    pub fn get_email(&self) -> String {
         self.email.clone().unwrap()
     }
-    pub fn get_phone(&self) -> String{
+    pub fn get_phone(&self) -> String {
         self.phone.clone().unwrap()
     }
     // pub  fn write(&self) {

@@ -1,24 +1,25 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
-mod app;
-mod performance;
-pub use app::TemplateApp;
-mod dbdriver;
-pub use dbdriver::actors;
-pub use dbdriver::performance;
-pub use dbdriver::performance_actors;
-pub use performance::Performance;
-pub use dbdriver::writer;
-mod actor;
-pub use actor::Actor;
-mod performance_actors;
-pub use performance_actors::PerformanceActors;
-mod play;
-mod poster;
-mod stage;
-mod theater;
-mod ticket;
-mod viewer;
-mod viewer_ticket;  
+//App appirience
+mod gui;
+pub use gui::app::TemplateApp;
+//Working with database
 mod dbworker;
+pub use dbworker::dbdriver::actors;
+pub use dbworker::dbdriver::performance;
+pub use dbworker::dbdriver::performance_actors;
+pub use dbworker::dbdriver::writer;
 pub use dbworker::querry;
+
+//Database entities
+mod entities;
+pub use entities::actor::Actor;
+pub use entities::performance::Performance;
+pub use entities::performance_actors::PerformanceActors;
+pub use entities::play::Play;
+pub use entities::poster::Poster;
+pub use entities::stage::Stage;
+pub use entities::theater::Theater;
+pub use entities::ticket::Ticket;
+pub use entities::viewer::Viewer;
+pub use entities::viewer_ticket::ViewerTicket;

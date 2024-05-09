@@ -1,7 +1,3 @@
-use serde::de::Error;
-
-use crate::dbdriver;
-
 #[derive(Debug,Clone)]
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct ViewerTicket{
