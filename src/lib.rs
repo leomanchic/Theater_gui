@@ -23,3 +23,6 @@ pub use entities::theater::Theater;
 pub use entities::ticket::Ticket;
 pub use entities::viewer::Viewer;
 pub use entities::viewer_ticket::ViewerTicket;
+
+
+mod entity;

@@ -2,13 +2,19 @@ use chrono::naive::NaiveDateTime;
 use chrono::NaiveDate;
 use postgres::types::ToSql;
 use postgres::{Client, NoTls};
+use sea_orm::{
+    ColumnTrait, Database, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder,
+};
 use std::error::Error;
 use std::time::Duration;
 use std::{env, thread, time};
 use tokio::time::sleep;
 use tokio_postgres;
 
-use crate::Actor;
+use crate::entities::{actor, performance, ticket, viewer};
+use crate::entity::prelude::{
+    ActorS, PerformanceActorsS, PerformanceS, PlayS, PosterS, StageS, TheaterS, TicketS, ViewerS, ViewerTicketS,
+};
 use crate::Performance;
 use crate::PerformanceActors;
 use crate::Play;
@@ -18,28 +24,119 @@ use crate::Theater;
 use crate::Ticket;
 use crate::Viewer;
 use crate::ViewerTicket;
+use crate::{entity, Actor};
+
+const DATABASE_URL: &str = "postgres://postgres:postgres@localhost/Theatre";
 
 thread_local!(static CONF: String  = env::var("DATABASE_CONF").unwrap());
+
 // const CONFA: Option<String> = Some(env::var("DATABASE_CONF"));
 
-// #[tokio::main]
+pub(super) async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
+    let db = Database::connect(DATABASE_URL).await?;
+
+    Ok(db)
+}
+
+pub async fn get_actors() -> Result<Vec<entity::actor::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", "naebnulos"),
+    };
+    let actors: Vec<entity::actor::Model> = ActorS::find()
+        // .filter(entity::actor::Column::Name.contains("chocolate"))
+        .order_by_asc(entity::actor::Column::Name)
+        .all(&db)
+        .await?;
+
+    Ok(actors)
+}
+
+pub async fn get_tickets() -> Result<Vec<entity::ticket::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", "naebnulos"),
+    };
+    let ticket: Vec<entity::ticket::Model> = TicketS::find()
+        // .filter(entity::actor::Column::Name.contains("chocolate"))
+        // .order_by_asc(entity::theater::Column::TheaterId)
+        .all(&db)
+        .await?;
+    println!("{:?}", ticket);
+    Ok(ticket)
+}
+pub async fn get_theaters() -> Result<Vec<entity::theater::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(err) => panic!("{}", "naebnulos"),
+    };
+
+    let theaters: Vec<entity::theater::Model> = TheaterS::find().all(&db).await?;
+    Ok(theaters)
+}
+pub async fn get_performances() -> Result<Vec<entity::performance::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let performances: Vec<entity::performance::Model> = PerformanceS::find().all(&db).await?;
+    Ok(performances)
+}
+pub async fn get_poster() -> Result<Vec<entity::poster::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let posters: Vec<entity::poster::Model> = PosterS::find().all(&db).await?;
+    Ok(posters)
+}
+pub async fn get_viewer() -> Result<Vec<entity::viewer::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let viewers: Vec<entity::viewer::Model> = ViewerS::find().all(&db).await?;
+    Ok(viewers)
+}
+
+pub async fn get_stage() -> Result<Vec<entity::stage::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let stages: Vec<entity::stage::Model> = StageS::find().all(&db).await?;
+    Ok(stages)
+}
+
+pub async fn get_per_actors() -> Result<Vec<entity::performance_actors::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let per_act: Vec<entity::performance_actors::Model> =
+        PerformanceActorsS::find().all(&db).await?;
+    Ok(per_act)
+}
+
+pub async fn get_plays() -> Result<Vec<entity::play::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let per_act: Vec<entity::play::Model> = PlayS::find().all(&db).await?;
+    Ok(per_act)
+}
+
+pub async fn get_viewer_ticket() -> Result<Vec<entity::viewer_ticket::Model>, Box<dyn Error>> {
+    let db = match sea_connection().await {
+        Ok(db) => db,
+        Err(_) => panic!("{}", "naebnulos"),
+    };
+    let per_act: Vec<entity::viewer_ticket::Model> = ViewerTicketS::find().all(&db).await?;
+    Ok(per_act)
+}
+
 pub async fn actors() -> Result<Vec<Actor>, Box<dyn Error>> {
-    // let mut  client = Client::connect("host=localhost user=postgres dbname='Theatre' password=postgres", NoTls)?;
-
-    // let mut actors: Vec<Actor> = vec![];
-    //     for row in client.query("SELECT actor_id, name, surname, role  FROM actor", &[])?{
-    //         let id: i32 = row.get(0);
-    //         let name: &str = row.get(1);
-    //         let surname: &str = row.get(2);
-    //         let role: &str = row.get(3);
-    //         let a = Actor::new(id , name.to_owned(), surname.to_owned(), role.to_owned());
-    //         println!("found person: {:?} ", a);
-    //         actors.push(a);
-    //     }
-
-    //     Ok(actors)
-    // thread::sleep(time::Duration::from_secs(5));
-
     let (client, connection) =
         tokio_postgres::connect(&CONF.with(|text| text.clone()), NoTls).await?;
     tokio::spawn(async move {
@@ -63,7 +160,7 @@ pub async fn actors() -> Result<Vec<Actor>, Box<dyn Error>> {
             Some(surname.unwrap_or_default().to_owned()),
             Some(role.unwrap_or_default().to_owned()),
         );
-        println!("found person: {:?} ", a);
+        // println!("found person: {:?} ", a);
         actors.push(a);
     }
     Ok(actors)
@@ -100,7 +197,7 @@ pub async fn performance() -> Result<Vec<Performance>, Box<dyn Error>> {
             s_id,
             Some(date.unwrap_or_default().to_string()),
         );
-        println!("found person: {:?} ", a);
+        // println!("found person: {:?} ", a);
         performance.push(a);
     }
     Ok(performance)
@@ -144,7 +241,7 @@ pub async fn performance_actors() -> Result<Vec<PerformanceActors>, Box<dyn Erro
         let amount:  Option<i32>= row.get(2);
         let aactors_perfor_id:  Option<i32> =row.get(3);
         let a = PerformanceActors::new(performance_performance_id , actor_actor_id, amount,aactors_perfor_id );
-        println!("found person: {:?} ", a);
+        // println!("found person: {:?} ", a);
         performance_a.push(a);
     }
     Ok(performance_a)
@@ -179,7 +276,7 @@ pub async fn play() -> Result<Vec<Play>, Box<dyn Error>> {
         let author: Option<String> = row.get(2);
         let director: Option<String> = row.get(3);
         let a = Play::new(play_id, title, author, director);
-        println!("found play: {:?} ", a);
+        // println!("found play: {:?} ", a);
         play.push(a);
     }
 
@@ -222,7 +319,7 @@ pub async fn poster() -> Result<Vec<Poster>, Box<dyn Error>> {
             Some(end_date.unwrap_or_default().to_string()),
             content,
         );
-        println!("found play: {:?} ", a);
+        // println!("found play: {:?} ", a);
         poster.push(a);
     }
 
@@ -253,7 +350,7 @@ pub async fn stage() -> Result<Vec<Stage>, Box<dyn Error>> {
         let theater_id: Option<i32> = row.get(1);
         let capacity: Option<i32> = row.get(2);
         let a = Stage::new(stage_id, theater_id, capacity);
-        println!("found stage: {:?} ", a);
+        // println!("found stage: {:?} ", a);
         stage.push(a);
     }
 
@@ -300,7 +397,7 @@ pub async fn theater() -> Result<Vec<Theater>, Box<dyn Error>> {
         let address: Option<String> = row.get(2);
         let capacity: Option<i32> = row.get(3);
         let a = Theater::new(theater_id, name, address, capacity);
-        println!("found theater: {:?} ", a);
+        // println!("found theater: {:?} ", a);
         theater.push(a);
     }
 
@@ -339,7 +436,7 @@ pub async fn ticket() -> Result<Vec<Ticket>, Box<dyn Error>> {
             cost,
             status,
         );
-        println!("found theater: {:?} ", a);
+        // println!("found theater: {:?} ", a);
         ticket.push(a);
     }
 
@@ -374,7 +471,7 @@ pub async fn viewer_ticket() -> Result<Vec<ViewerTicket>, Box<dyn Error>> {
             Some(bought_date.unwrap().to_string()),
             vi_ti_id,
         );
-        println!("found theater: {:?} ", a);
+        // println!("found theater: {:?} ", a);
         vticket.push(a);
     }
 
@@ -401,7 +498,7 @@ pub async fn viewer() -> Result<Vec<Viewer>, Box<dyn Error>> {
         let email: Option<String> = row.get(2);
         let phone: Option<String> = row.get(3);
         let a = Viewer::new(viewer_id, name, email, phone);
-        println!("found viewer: {:?} ", a);
+        // println!("found viewer: {:?} ", a);
         viewer.push(a);
     }
 

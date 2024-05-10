@@ -25,16 +25,7 @@ use tokio;
 // }
 
 use crate::{
-    Actor,
-    dbworker::dbdriver,
-    Play,
-    Poster,
-    Stage,
-    Theater,
-    Ticket,
-    Viewer,
-    ViewerTicket,
-    Performance, PerformanceActors,
+    dbworker::dbdriver, entity, Actor, Performance, PerformanceActors, Play, Poster, Stage, Theater, Ticket, Viewer, ViewerTicket
 };
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -44,16 +35,18 @@ pub struct TemplateApp {
     // Example stuff:
     #[serde(skip)] // This how you opt-out of serialization of a field
     // texts: Arc<Mutex<String>>,
-    actors: Arc<Vec<Actor>>,
-    performance: Arc<Vec<Performance>>,
-    performance_actors: Arc<Vec<PerformanceActors>>,
-    plays: Arc<Vec<Play>>,
-    poster: Arc<Vec<Poster>>,
-    stage: Arc<Vec<Stage>>,
-    theater: Arc<Vec<Theater>>,
-    ticket: Arc<Vec<Ticket>>,
-    viewer: Arc<Vec<Viewer>>,
-    vticket: Arc<Vec<ViewerTicket>>,
+
+    actr: Arc<Vec<entity::actor::Model>>,
+    ticket: Arc<Vec<entity::ticket::Model>>,
+    theater: Arc<Vec<entity::theater::Model>>,
+    performance: Arc<Vec<entity::performance::Model>>,
+    viewer: Arc<Vec<entity::viewer::Model>>,
+    poster: Arc<Vec<entity::poster::Model>>,
+    stage: Arc<Vec<entity::stage::Model>>,
+    performance_actors: Arc<Vec<entity::performance_actors::Model>>,
+    plays: Arc<Vec<entity::play::Model>>,
+    vticket: Arc<Vec<entity::viewer_ticket::Model>>,
+
 
     poster_vieport: Arc<AtomicBool>,
     actors_viewport: Arc<AtomicBool>,
@@ -75,7 +68,18 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             // Example stuff:
-            
+            actr: Arc::new(Vec::new()),
+            ticket: Arc::new(Vec::new()),
+            performance: Arc::new(Vec::new()),
+            theater: Arc::new(Vec::new()),
+            viewer: Arc::new(Vec::new()),
+            poster: Arc::new(Vec::new()),
+            performance_actors: Arc::new(Vec::new()),
+            plays: Arc::new(Vec::new()),
+            stage: Arc::new(Vec::new()),
+            vticket: Arc::new(Vec::new()),
+
+
             tables: vec![
                 "actor".to_owned(),
                 "performance".to_owned(),
@@ -88,16 +92,6 @@ impl Default for TemplateApp {
                 "viewer".to_owned(),
                 "viewer_ticket".to_owned(),
             ],
-            actors: Arc::new(Vec::new()),
-            performance_actors: Arc::new(Vec::new()),
-            performance: Arc::new(Vec::new()),
-            plays: Arc::new(Vec::new()),
-            poster: Arc::new(Vec::new()),
-            stage: Arc::new(Vec::new()),
-            theater: Arc::new(Vec::new()),
-            ticket: Arc::new(Vec::new()),
-            viewer: Arc::new(Vec::new()),
-            vticket: Arc::new(Vec::new()),
 
             poster_vieport: Arc::new(AtomicBool::new(false)),
             performance_viewport: Arc::new(AtomicBool::new(false)),
@@ -282,8 +276,9 @@ impl eframe::App for TemplateApp {
                             actors_viewport = true;
                             self.actors_viewport
                                 .store(actors_viewport, Ordering::Relaxed);
+                            self.actr = Arc::new(dbdriver::get_actors().await.unwrap());
 
-                            self.actors = Arc::new(dbdriver::actors().await.unwrap());
+                            // self.actors = Arc::new(dbdriver::actors().await.unwrap());
                         }
 
                         if ui
@@ -297,7 +292,7 @@ impl eframe::App for TemplateApp {
                             performance_viewport = true;
                             self.performance_viewport
                                 .store(performance_viewport, Ordering::Relaxed);
-                            self.performance = Arc::new(dbdriver::performance().await.unwrap())
+                            self.performance = Arc::new(dbdriver::get_performances().await.unwrap())
                         }
 
                         if ui
@@ -312,7 +307,7 @@ impl eframe::App for TemplateApp {
                             self.performance_actors_viewport
                                 .store(performance_actors_viewport, Ordering::Relaxed);
                             self.performance_actors =
-                                Arc::new(dbdriver::performance_actors().await.unwrap());
+                                Arc::new(dbdriver::get_per_actors().await.unwrap());
                         }
 
                         if ui
@@ -325,7 +320,7 @@ impl eframe::App for TemplateApp {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
                             play_viewport = true;
                             self.play_viewport.store(play_viewport, Ordering::Relaxed);
-                            self.plays = Arc::new(dbdriver::play().await.unwrap());
+                            self.plays = Arc::new(dbdriver::get_plays().await.unwrap());
                         }
                         if ui
                             .add(
@@ -337,7 +332,7 @@ impl eframe::App for TemplateApp {
                             poster_viewport = true;
                             self.poster_vieport
                                 .store(poster_viewport, Ordering::Relaxed);
-                            self.poster = Arc::new(dbdriver::poster().await.unwrap());
+                            self.poster = Arc::new(dbdriver::get_poster().await.unwrap());
                         }
                         if ui
                             .add(
@@ -348,7 +343,7 @@ impl eframe::App for TemplateApp {
                         {
                             stage_viewport = true;
                             self.stage_viewport.store(stage_viewport, Ordering::Relaxed);
-                            self.stage = Arc::new(dbdriver::stage().await.unwrap());
+                            self.stage = Arc::new(dbdriver::get_stage().await.unwrap());
                         }
                         if ui
                             .add(
@@ -360,7 +355,7 @@ impl eframe::App for TemplateApp {
                             theater_viewport = true;
                             self.theater_viewport
                                 .store(theater_viewport, Ordering::Relaxed);
-                            self.theater = Arc::new(dbdriver::theater().await.unwrap());
+                            self.theater = Arc::new(dbdriver::get_theaters().await.unwrap());
                         }
                         if ui
                             .add(
@@ -372,7 +367,8 @@ impl eframe::App for TemplateApp {
                             ticket_viewport = true;
                             self.ticket_viewport
                                 .store(ticket_viewport, Ordering::Relaxed);
-                            self.theater = Arc::new(dbdriver::theater().await.unwrap());
+                            self.ticket = Arc::new(dbdriver::get_tickets().await.unwrap());
+
                         }
                         if ui
                             .add(
@@ -384,7 +380,7 @@ impl eframe::App for TemplateApp {
                             viewer_viewport = true;
                             self.viewer_viewport
                                 .store(viewer_viewport, Ordering::Relaxed);
-                            self.viewer = Arc::new(dbdriver::viewer().await.unwrap());
+                            self.viewer = Arc::new(dbdriver::get_viewer().await.unwrap());
                         }
                         if ui
                             .add(
@@ -396,7 +392,7 @@ impl eframe::App for TemplateApp {
                             vticket_viewport = true;
                             self.vticket_viewport
                                 .store(vticket_viewport, Ordering::Relaxed);
-                            self.vticket = Arc::new(dbdriver::viewer_ticket().await.unwrap());
+                            self.vticket = Arc::new(dbdriver::get_viewer_ticket().await.unwrap());
                         }
                     });
                 });
@@ -455,16 +451,16 @@ impl eframe::App for TemplateApp {
                                     for i in &*vticket {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_vvid().to_string());
+                                                ui.label(&i.viewer_viewer_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_ttid().to_string());
+                                                ui.label(&i.ticket_ticket_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_bdate());
+                                                ui.label(&i.bought_date.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_vtid().to_string());
+                                                ui.label(&i.vi_ti_id.to_string());
                                             });
                                         });
                                     }
@@ -515,16 +511,16 @@ impl eframe::App for TemplateApp {
                                     for i in &*viewer {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_vid().to_string());
+                                                ui.label(&i.viewer_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_name());
+                                                ui.label(i.name.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_email());
+                                                ui.label(i.email.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_phone());
+                                                ui.label(i.phone.as_ref().unwrap());
                                             });
                                         });
                                     }
@@ -586,22 +582,22 @@ impl eframe::App for TemplateApp {
                                     for i in &*ticket {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_tid().to_string());
+                                                ui.label(&i.ticket_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_pid().to_string());
+                                                ui.label(&i.performance_id.unwrap_or_default().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_snum().to_string());
+                                                ui.label(&i.seat_number.unwrap_or_default().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_date());
+                                                ui.label(&i.date.unwrap_or_default().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_cost().to_string());
+                                                ui.label(&i.cost.unwrap_or_default().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_status());
+                                                ui.label(&i.status.clone().unwrap_or_default());
                                             });
                                         });
                                     }
@@ -655,16 +651,16 @@ impl eframe::App for TemplateApp {
                                     for i in &*theater {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_tid().to_string());
+                                                ui.label(&i.theater_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_name());
+                                                ui.label(i.name.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_address());
+                                                ui.label(i.address.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_capacity().to_string());
+                                                ui.label(&i.capacity.unwrap().to_string());
                                             });
                                         });
                                     }
@@ -714,13 +710,13 @@ impl eframe::App for TemplateApp {
                                     for i in &*stage {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_sid().to_string());
+                                                ui.label(&i.stage_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_tid().to_string());
+                                                ui.label(&i.theater_id.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_capacity().to_string());
+                                                ui.label(&i.capacity.unwrap().to_string());
                                             });
                                         });
                                     }
@@ -817,19 +813,19 @@ impl eframe::App for TemplateApp {
                                     for i in &*poster {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_id().to_string());
+                                                ui.label(&i.poster_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_pid().to_string());
+                                                ui.label(&i.performance_id.unwrap_or_default().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_sd());
+                                                ui.label(&i.start_date.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_edate());
+                                                ui.label(&i.end_date.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_content());
+                                                ui.label(i.content.as_ref().unwrap());
                                             });
                                         });
                                     }
@@ -884,17 +880,17 @@ impl eframe::App for TemplateApp {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
                                                 ui.label(
-                                                    &i.get_performance_performance_id().to_string(),
+                                                    &i.performance_performance_id.to_string(),
                                                 );
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_actor_actor_id().to_string());
+                                                ui.label(&i.actor_actor_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_amount().to_string());
+                                                ui.label(&i.amount.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_actors_perfor_id().to_string());
+                                                ui.label(&i.actor_actor_id.to_string());
                                             });
                                         });
                                     }
@@ -911,7 +907,7 @@ impl eframe::App for TemplateApp {
 
         if self.actors_viewport.load(Ordering::Relaxed) {
             let actors_viewport = self.actors_viewport.clone();
-            let actors = self.actors.clone();
+            let actr = self.actr.clone();
             let name = Arc::new(Mutex::new(String::new()));
             let sn = Arc::new(Mutex::new(String::new()));
             let role = Arc::new(Mutex::new(String::new()));
@@ -991,19 +987,19 @@ impl eframe::App for TemplateApp {
                                     });
                                 })
                                 .body(|mut body| {
-                                    for i in &*actors {
+                                    for i in &*actr {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_id().to_string());
+                                                ui.label(&i.actor_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_name());
+                                                ui.label(i.name.clone().unwrap_or_default());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_surname());
+                                                ui.label(i.surname.clone().unwrap_or_default());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_role());
+                                                ui.label(i.role.clone().unwrap_or_default());
                                             });
                                         });
                                     }
@@ -1057,16 +1053,16 @@ impl eframe::App for TemplateApp {
                                     for i in &*plays {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_play_id().to_string());
+                                                ui.label(&i.play_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_title());
+                                                ui.label(i.title.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_author());
+                                                ui.label(i.author.as_ref().unwrap());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_director());
+                                                ui.label(i.director.as_ref().unwrap());
                                             });
                                         });
                                     }
@@ -1120,16 +1116,16 @@ impl eframe::App for TemplateApp {
                                     for i in &*performance {
                                         body.row(30.0, |mut row| {
                                             row.col(|ui| {
-                                                ui.label(&i.get_id().to_string());
+                                                ui.label(&i.performance_id.to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_plid().to_string());
+                                                ui.label(&i.play_id.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_sid().to_string());
+                                                ui.label(&i.stage_id.unwrap().to_string());
                                             });
                                             row.col(|ui| {
-                                                ui.label(&i.get_date().to_string());
+                                                ui.label(&i.start_datetime.unwrap().to_string());
                                             });
                                         });
                                     }
