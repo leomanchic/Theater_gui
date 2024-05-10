@@ -4,6 +4,23 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::{dbworker::dbdriver, entity::{self}};
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct ActorView{
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<
+    Mutex<Vec<entity::actor::Model>>>,
+}
+impl  ActorView{
+    pub fn new() -> ActorView {
+        ActorView {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new()))
+        }
+
+    }
+}
+
+
 pub fn actor_view(ctx: &egui::Context,actr: &Vec<entity::actor::Model>, actors_viewport: &mut Arc<AtomicBool>) {
     let actors_viewport = actors_viewport.clone();
     let actr = actr.clone();

@@ -25,8 +25,9 @@ use tokio;
 use crate::{dbworker::dbdriver, entity};
 
 use super::{
-    actor_view, performance_actors_view, performance_view, play_view, poster_view, sqlw,
-    stage_view, theater_view, ticket_view, viewer_ticket_view, viewer_view,
+    actor_view::{self, ActorView},
+    performance_actors_view, performance_view, play_view, poster_view, sqlw, stage_view,
+    theater_view, ticket_view, viewer_ticket_view, viewer_view,
 };
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -34,10 +35,11 @@ use super::{
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     // Example stuff:
-    #[serde(skip)] // This how you opt-out of serialization of a field
+    // #[serde(skip)] // This how you opt-out of serialization of a field
     // texts: Arc<Mutex<String>>,
-    actr: Arc<Vec<entity::actor::Model>>,
+    // actr: Arc<Vec<entity::actor::Model>>,
     ticket: Arc<Vec<entity::ticket::Model>>,
+    actview: ActorView,
     theater: Arc<Vec<entity::theater::Model>>,
     performance: Arc<Vec<entity::performance::Model>>,
     viewer: Arc<Vec<entity::viewer::Model>>,
@@ -48,7 +50,7 @@ pub struct TemplateApp {
     vticket: Arc<Vec<entity::viewer_ticket::Model>>,
 
     poster_vieport: Arc<AtomicBool>,
-    actors_viewport: Arc<AtomicBool>,
+    // actors_viewport: Arc<AtomicBool>,
     performance_viewport: Arc<AtomicBool>,
     performance_actors_viewport: Arc<AtomicBool>,
     play_viewport: Arc<AtomicBool>,
@@ -67,7 +69,8 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             // Example stuff:
-            actr: Arc::new(Vec::new()),
+            actview: ActorView::new(),
+            // actr: Arc::new(Vec::new()),
             ticket: Arc::new(Vec::new()),
             performance: Arc::new(Vec::new()),
             theater: Arc::new(Vec::new()),
@@ -93,7 +96,7 @@ impl Default for TemplateApp {
 
             poster_vieport: Arc::new(AtomicBool::new(false)),
             performance_viewport: Arc::new(AtomicBool::new(false)),
-            actors_viewport: Arc::new(AtomicBool::new(false)),
+            // actors_viewport: Arc::new(AtomicBool::new(false)),
             performance_actors_viewport: Arc::new(AtomicBool::new(false)),
             play_viewport: Arc::new(AtomicBool::new(false)),
             stage_viewport: Arc::new(AtomicBool::new(false)),
@@ -201,7 +204,8 @@ impl eframe::App for TemplateApp {
             // play".to_owned(),"posters".to_owned(),"stage".to_owned(),"theater".to_owned(),"ticket".to_owned(),
             // "viewer".to_owned(),"viewer_ticket".to_owned()];
 
-            let mut actors_viewport = self.actors_viewport.load(Ordering::Relaxed);
+            // let mut actors_viewport = self.actors_viewport.load(Ordering::Relaxed);
+            let mut av = self.actview.view_enabled.load(Ordering::Relaxed);
             let mut performance_viewport = self.performance_viewport.load(Ordering::Relaxed);
             let mut performance_actors_viewport =
                 self.performance_actors_viewport.load(Ordering::Relaxed);
@@ -226,10 +230,10 @@ impl eframe::App for TemplateApp {
                             .clicked()
                         {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                            actors_viewport = true;
-                            self.actors_viewport
-                                .store(actors_viewport, Ordering::Relaxed);
-                            self.actr = Arc::new(dbdriver::get_actors().await.unwrap());
+                            av = true;
+                            self.actview.view_enabled.store(av, Ordering::Relaxed);
+                            let mut keke = self.actview.content.lock().unwrap();
+                            *keke = dbdriver::get_actors().await.unwrap();
 
                             // self.actors = Arc::new(dbdriver::actors().await.unwrap());
                         }
@@ -388,8 +392,12 @@ impl eframe::App for TemplateApp {
             )
         }
 
-        if self.actors_viewport.load(Ordering::Relaxed) {
-            actor_view(ctx, &self.actr, &mut self.actors_viewport);
+        if self.actview.view_enabled.load(Ordering::Relaxed) {
+            actor_view::actor_view(
+                ctx,
+                &self.actview.content.lock().unwrap(),
+                &mut self.actview.view_enabled,
+            );
         }
 
         if self.play_viewport.load(Ordering::Relaxed) {

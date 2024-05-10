@@ -1,12 +1,11 @@
 use chrono::naive::NaiveDateTime;
 use chrono::NaiveDate;
-use postgres::types::ToSql;
-use postgres::{Client, NoTls};
 use sea_orm::{
     ColumnTrait, Database, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder,
 };
 use std::error::Error;
 use tokio_postgres;
+use tokio_postgres::{Client, NoTls};
 
 use crate::entity::prelude::{
     ActorS, PerformanceActorsS, PerformanceS, PlayS, PosterS, StageS, TheaterS, TicketS, ViewerS,
