@@ -1,0 +1,78 @@
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
+
+use egui_extras::{Column, TableBuilder};
+
+use crate::{
+    dbworker::dbdriver,
+    entity::{self},
+};
+
+pub fn performance_view(
+    ctx: &egui::Context,
+    performance: &Vec<entity::performance::Model>,
+    performance_viewport: &mut Arc<AtomicBool>,
+) {
+    let performance_viewport = performance_viewport.clone();
+    let performance = performance.clone();
+    ctx.show_viewport_deferred(
+        egui::ViewportId::from_hash_of("performance"),
+        egui::ViewportBuilder::default()
+            .with_title("Performances")
+            .with_inner_size([200.0, 100.0]),
+        move |ctx, class| {
+            assert!(
+                class == egui::ViewportClass::Deferred,
+                "This egui backend doesn't support multiple viewports"
+            );
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    TableBuilder::new(ui)
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .column(Column::auto().resizable(true))
+                        .header(20.0, |mut header| {
+                            header.col(|ui| {
+                                ui.heading("performance_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("play_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("stage_id");
+                            });
+                            header.col(|ui| {
+                                ui.heading("date");
+                            });
+                        })
+                        .body(|mut body| {
+                            for i in &*performance {
+                                body.row(30.0, |mut row| {
+                                    row.col(|ui| {
+                                        ui.label(&i.performance_id.to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.play_id.unwrap().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.stage_id.unwrap().to_string());
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(&i.start_datetime.unwrap().to_string());
+                                    });
+                                });
+                            }
+                        });
+                });
+            });
+            if ctx.input(|i| i.viewport().close_requested()) {
+                // Tell parent to close us.
+                performance_viewport.store(false, Ordering::Relaxed);
+            }
+        },
+    );
+}
