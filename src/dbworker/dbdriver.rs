@@ -4,6 +4,7 @@ use sea_orm::{
     ColumnTrait, Database, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder,
 };
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 use tokio_postgres;
 use tokio_postgres::{Client, NoTls};
 
@@ -20,7 +21,7 @@ const CONF: &str = "host=localhost user=postgres dbname='Theatre' password=postg
 // thread_local!(static CONF: String  = env::var("DATABASE_CONF").unwrap());
 //
 
-pub(super) async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
+pub async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
     let db = Database::connect(DATABASE_URL).await?;
 
     Ok(db)
@@ -122,6 +123,21 @@ pub async fn get_viewer_ticket() -> Result<Vec<entity::viewer_ticket::Model>, Bo
     };
     let per_act: Vec<entity::viewer_ticket::Model> = ViewerTicketS::find().all(&db).await?;
     Ok(per_act)
+}
+
+pub async fn actor_creator(
+    name: &Arc<Mutex<String>>,
+    surmame: &Arc<Mutex<String>>,
+    role: &Arc<Mutex<String>>,
+) -> () {
+    let db = sea_connection().await.unwrap();
+    let act = entity::actor::ActiveModel {
+        name: sea_orm::ActiveValue::Set(Some(name.lock().unwrap().to_string())),
+        surname: sea_orm::ActiveValue::Set(Some(surmame.lock().unwrap().to_string())),
+        role: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().to_string())),
+        ..Default::default()
+    };
+    ActorS::insert(act).exec(&db).await.unwrap();
 }
 
 pub async fn writer(statment: String) -> Result<(), Box<dyn Error>> {

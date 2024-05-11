@@ -9,6 +9,20 @@ use crate::{
     dbworker::dbdriver,
     entity::{self},
 };
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct Poster_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::poster::Model>>>,
+}
+
+impl Poster_View {
+    pub fn new() -> Poster_View {
+        Poster_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
 
 pub fn poster_view(
     ctx: &egui::Context,

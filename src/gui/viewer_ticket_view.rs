@@ -9,6 +9,21 @@ use crate::{
     dbworker::dbdriver,
     entity::{self, theater},
 };
+#[derive(serde::Deserialize, serde::Serialize)]
+
+pub struct Viewer_Ticket_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::viewer_ticket::Model>>>,
+}
+
+impl Viewer_Ticket_View {
+    pub fn new() -> Viewer_Ticket_View {
+        Viewer_Ticket_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
 
 pub fn viewer_ticket_view(
     ctx: &egui::Context,

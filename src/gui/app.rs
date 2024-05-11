@@ -10,24 +10,20 @@ use egui_extras::{Column, DatePickerButton, TableBuilder};
 use serde;
 use tokio;
 
-// struct Texts {
-//     text: Mutex<String>,
-// }
-// struct Views {
-//     poster_vieport: Arc<AtomicBool>,
-//     actors_viewport: Arc<AtomicBool>,
-//     performance_viewport: Arc<AtomicBool>,
-//     performance_actors_viewport: Arc<AtomicBool>,
-//     play_viewport: Arc<AtomicBool>,
-//     stage_viewport: Arc<AtomicBool>,
-// }
-
 use crate::{dbworker::dbdriver, entity};
 
 use super::{
     actor_view::{self, ActorView},
-    performance_actors_view, performance_view, play_view, poster_view, sqlw, stage_view,
-    theater_view, ticket_view, viewer_ticket_view, viewer_view,
+    performance_actors_view::{self, Performance_Actors_View},
+    performance_view::{self, Performance_View},
+    play_view::{self, Plays_View},
+    poster_view::{self, Poster_View},
+    sqlw,
+    stage_view::{self, Stage_View},
+    theater_view::{self, Theater_View},
+    ticket_view::{self, Ticket_View},
+    viewer_ticket_view::{self, Viewer_Ticket_View},
+    viewer_view::{self, Viewer_view},
 };
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -38,27 +34,27 @@ pub struct TemplateApp {
     // #[serde(skip)] // This how you opt-out of serialization of a field
     // texts: Arc<Mutex<String>>,
     // actr: Arc<Vec<entity::actor::Model>>,
-    ticket: Arc<Vec<entity::ticket::Model>>,
     actview: ActorView,
-    theater: Arc<Vec<entity::theater::Model>>,
-    performance: Arc<Vec<entity::performance::Model>>,
-    viewer: Arc<Vec<entity::viewer::Model>>,
-    poster: Arc<Vec<entity::poster::Model>>,
-    stage: Arc<Vec<entity::stage::Model>>,
-    performance_actors: Arc<Vec<entity::performance_actors::Model>>,
-    plays: Arc<Vec<entity::play::Model>>,
-    vticket: Arc<Vec<entity::viewer_ticket::Model>>,
+    performance_actor_viewport: Performance_Actors_View,
+    performance: Performance_View,
+    ticket_viewport: Ticket_View,
+    theater_viewport: Theater_View,
+    viewer_viewport: Viewer_view,
+    poster_viewport: Poster_View,
+    plays_viewport: Plays_View,
+    stage_viewport: Stage_View,
+    viewer_ticket_viewport: Viewer_Ticket_View,
+    // ticket: Arc<Vec<entity::ticket::Model>>,
+    // poster: Arc<Vec<entity::poster::Model>>,
+    // performance_actors: Arc<Vec<entity::performance_actors::Model>>,
 
-    poster_vieport: Arc<AtomicBool>,
     // actors_viewport: Arc<AtomicBool>,
-    performance_viewport: Arc<AtomicBool>,
-    performance_actors_viewport: Arc<AtomicBool>,
-    play_viewport: Arc<AtomicBool>,
-    stage_viewport: Arc<AtomicBool>,
-    ticket_viewport: Arc<AtomicBool>,
-    theater_viewport: Arc<AtomicBool>,
-    viewer_viewport: Arc<AtomicBool>,
-    vticket_viewport: Arc<AtomicBool>,
+    // performance_viewport: Arc<AtomicBool>,
+    // performance_actors_viewport: Arc<AtomicBool>,
+    // stage_viewport: Arc<AtomicBool>,
+    // ticket_viewport: Arc<AtomicBool>,
+    // theater_viewport: Arc<AtomicBool>,
+    // viewer_viewport: Arc<AtomicBool>,
 
     // views: Views,
     tables: Vec<String>,
@@ -68,19 +64,17 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            // Example stuff:
+            // Init stuff:
             actview: ActorView::new(),
-            // actr: Arc::new(Vec::new()),
-            ticket: Arc::new(Vec::new()),
-            performance: Arc::new(Vec::new()),
-            theater: Arc::new(Vec::new()),
-            viewer: Arc::new(Vec::new()),
-            poster: Arc::new(Vec::new()),
-            performance_actors: Arc::new(Vec::new()),
-            plays: Arc::new(Vec::new()),
-            stage: Arc::new(Vec::new()),
-            vticket: Arc::new(Vec::new()),
-
+            performance_actor_viewport: Performance_Actors_View::new(),
+            performance: Performance_View::new(),
+            ticket_viewport: Ticket_View::new(),
+            theater_viewport: Theater_View::new(),
+            viewer_viewport: Viewer_view::new(),
+            plays_viewport: Plays_View::new(),
+            poster_viewport: Poster_View::new(),
+            stage_viewport: Stage_View::new(),
+            viewer_ticket_viewport: Viewer_Ticket_View::new(),
             tables: vec![
                 "actor".to_owned(),
                 "performance".to_owned(),
@@ -93,17 +87,6 @@ impl Default for TemplateApp {
                 "viewer".to_owned(),
                 "viewer_ticket".to_owned(),
             ],
-
-            poster_vieport: Arc::new(AtomicBool::new(false)),
-            performance_viewport: Arc::new(AtomicBool::new(false)),
-            // actors_viewport: Arc::new(AtomicBool::new(false)),
-            performance_actors_viewport: Arc::new(AtomicBool::new(false)),
-            play_viewport: Arc::new(AtomicBool::new(false)),
-            stage_viewport: Arc::new(AtomicBool::new(false)),
-            theater_viewport: Arc::new(AtomicBool::new(false)),
-            ticket_viewport: Arc::new(AtomicBool::new(false)),
-            viewer_viewport: Arc::new(AtomicBool::new(false)),
-            vticket_viewport: Arc::new(AtomicBool::new(false)),
             rsql: Arc::new(AtomicBool::new(false)),
         }
     }
@@ -206,16 +189,24 @@ impl eframe::App for TemplateApp {
 
             // let mut actors_viewport = self.actors_viewport.load(Ordering::Relaxed);
             let mut av = self.actview.view_enabled.load(Ordering::Relaxed);
-            let mut performance_viewport = self.performance_viewport.load(Ordering::Relaxed);
-            let mut performance_actors_viewport =
-                self.performance_actors_viewport.load(Ordering::Relaxed);
-            let mut play_viewport = self.play_viewport.load(Ordering::Relaxed);
-            let mut poster_viewport = self.poster_vieport.load(Ordering::Relaxed);
-            let mut stage_viewport: bool = self.stage_viewport.load(Ordering::Relaxed);
-            let mut theater_viewport: bool = self.theater_viewport.load(Ordering::Relaxed);
-            let mut ticket_viewport: bool = self.ticket_viewport.load(Ordering::Relaxed);
-            let mut viewer_viewport: bool = self.viewer_viewport.load(Ordering::Relaxed);
-            let mut vticket_viewport: bool = self.vticket_viewport.load(Ordering::Relaxed);
+            let mut pav = self
+                .performance_actor_viewport
+                .view_enabled
+                .load(Ordering::Relaxed);
+
+            let mut performance_view = self.performance.view_enabled.load(Ordering::Relaxed);
+            // let mut performance_actors_viewport =
+            //     self.performance_actors_viewport.load(Ordering::Relaxed);
+            let mut play_view = self.plays_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut poster_view = self.poster_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut stage_view: bool = self.stage_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut theater_view: bool = self.theater_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut ticket_view: bool = self.ticket_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut viewer_view: bool = self.viewer_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut vticket_view: bool = self
+                .viewer_ticket_viewport
+                .view_enabled
+                .load(Ordering::Relaxed);
 
             ui.vertical_centered(|ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
@@ -232,8 +223,8 @@ impl eframe::App for TemplateApp {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
                             av = true;
                             self.actview.view_enabled.store(av, Ordering::Relaxed);
-                            let mut keke = self.actview.content.lock().unwrap();
-                            *keke = dbdriver::get_actors().await.unwrap();
+                            let mut act = self.actview.content.lock().unwrap();
+                            *act = dbdriver::get_actors().await.unwrap();
 
                             // self.actors = Arc::new(dbdriver::actors().await.unwrap());
                         }
@@ -246,10 +237,12 @@ impl eframe::App for TemplateApp {
                             .clicked()
                         {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                            performance_viewport = true;
-                            self.performance_viewport
-                                .store(performance_viewport, Ordering::Relaxed);
-                            self.performance = Arc::new(dbdriver::get_performances().await.unwrap())
+                            performance_view = true;
+                            self.performance
+                                .view_enabled
+                                .store(performance_view, Ordering::Relaxed);
+                            let mut pvec = self.performance.content.lock().unwrap();
+                            *pvec = dbdriver::get_performances().await.unwrap()
                         }
 
                         if ui
@@ -260,11 +253,12 @@ impl eframe::App for TemplateApp {
                             .clicked()
                         {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                            performance_actors_viewport = true;
-                            self.performance_actors_viewport
-                                .store(performance_actors_viewport, Ordering::Relaxed);
-                            self.performance_actors =
-                                Arc::new(dbdriver::get_per_actors().await.unwrap());
+                            pav = true;
+                            self.performance_actor_viewport
+                                .view_enabled
+                                .store(pav, Ordering::Relaxed);
+                            let mut pac = self.performance_actor_viewport.content.lock().unwrap();
+                            *pac = dbdriver::get_per_actors().await.unwrap();
                         }
 
                         if ui
@@ -275,9 +269,12 @@ impl eframe::App for TemplateApp {
                             .clicked()
                         {
                             // ui.checkbox(&mut actors_viewport, "Show deferred child viewport");
-                            play_viewport = true;
-                            self.play_viewport.store(play_viewport, Ordering::Relaxed);
-                            self.plays = Arc::new(dbdriver::get_plays().await.unwrap());
+                            play_view = true;
+                            self.plays_viewport
+                                .view_enabled
+                                .store(play_view, Ordering::Relaxed);
+                            let mut binding = self.plays_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_plays().await.unwrap();
                         }
                         if ui
                             .add(
@@ -286,10 +283,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            poster_viewport = true;
-                            self.poster_vieport
-                                .store(poster_viewport, Ordering::Relaxed);
-                            self.poster = Arc::new(dbdriver::get_poster().await.unwrap());
+                            poster_view = true;
+                            self.poster_viewport
+                                .view_enabled
+                                .store(poster_view, Ordering::Relaxed);
+                            let mut binding = self.poster_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_poster().await.unwrap();
                         }
                         if ui
                             .add(
@@ -298,9 +297,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            stage_viewport = true;
-                            self.stage_viewport.store(stage_viewport, Ordering::Relaxed);
-                            self.stage = Arc::new(dbdriver::get_stage().await.unwrap());
+                            stage_view = true;
+                            self.stage_viewport
+                                .view_enabled
+                                .store(stage_view, Ordering::Relaxed);
+                            let mut binding = self.stage_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_stage().await.unwrap();
                         }
                         if ui
                             .add(
@@ -309,10 +311,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            theater_viewport = true;
+                            theater_view = true;
                             self.theater_viewport
-                                .store(theater_viewport, Ordering::Relaxed);
-                            self.theater = Arc::new(dbdriver::get_theaters().await.unwrap());
+                                .view_enabled
+                                .store(theater_view, Ordering::Relaxed);
+                            let mut binding = self.theater_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_theaters().await.unwrap();
                         }
                         if ui
                             .add(
@@ -321,10 +325,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            ticket_viewport = true;
+                            ticket_view = true;
                             self.ticket_viewport
-                                .store(ticket_viewport, Ordering::Relaxed);
-                            self.ticket = Arc::new(dbdriver::get_tickets().await.unwrap());
+                                .view_enabled
+                                .store(ticket_view, Ordering::Relaxed);
+                            let mut binding = self.ticket_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_tickets().await.unwrap();
                         }
                         if ui
                             .add(
@@ -333,10 +339,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            viewer_viewport = true;
+                            viewer_view = true;
                             self.viewer_viewport
-                                .store(viewer_viewport, Ordering::Relaxed);
-                            self.viewer = Arc::new(dbdriver::get_viewer().await.unwrap());
+                                .view_enabled
+                                .store(viewer_view, Ordering::Relaxed);
+                            let mut binding = self.viewer_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_viewer().await.unwrap();
                         }
                         if ui
                             .add(
@@ -345,10 +353,12 @@ impl eframe::App for TemplateApp {
                             )
                             .clicked()
                         {
-                            vticket_viewport = true;
-                            self.vticket_viewport
-                                .store(vticket_viewport, Ordering::Relaxed);
-                            self.vticket = Arc::new(dbdriver::get_viewer_ticket().await.unwrap());
+                            vticket_view = true;
+                            self.viewer_ticket_viewport
+                                .view_enabled
+                                .store(vticket_view, Ordering::Relaxed);
+                            let mut binding = self.viewer_ticket_viewport.content.lock().unwrap();
+                            *binding = dbdriver::get_viewer_ticket().await.unwrap();
                         }
                     });
                 });
@@ -360,35 +370,67 @@ impl eframe::App for TemplateApp {
             });
         });
 
-        if self.vticket_viewport.load(Ordering::Relaxed) {
-            viewer_ticket_view::viewer_ticket_view(ctx, &self.vticket, &mut self.vticket_viewport)
+        if self
+            .viewer_ticket_viewport
+            .view_enabled
+            .load(Ordering::Relaxed)
+        {
+            viewer_ticket_view::viewer_ticket_view(
+                ctx,
+                &self.viewer_ticket_viewport.content.lock().unwrap(),
+                &mut self.viewer_ticket_viewport.view_enabled,
+            )
         }
 
-        if self.viewer_viewport.load(Ordering::Relaxed) {
-            viewer_view::viewer_view(ctx, &self.viewer, &mut self.viewer_viewport)
+        if self.viewer_viewport.view_enabled.load(Ordering::Relaxed) {
+            viewer_view::viewer_view(
+                ctx,
+                &self.viewer_viewport.content.lock().unwrap(),
+                &mut self.viewer_viewport.view_enabled,
+            )
         }
 
-        if self.ticket_viewport.load(Ordering::Relaxed) {
-            ticket_view::ticket_view(ctx, &self.ticket, &mut self.ticket_viewport)
+        if self.ticket_viewport.view_enabled.load(Ordering::Relaxed) {
+            ticket_view::ticket_view(
+                ctx,
+                &self.ticket_viewport.content.lock().unwrap(),
+                &mut self.ticket_viewport.view_enabled,
+            )
         }
 
-        if self.theater_viewport.load(Ordering::Relaxed) {
-            theater_view::theater_view(ctx, &self.theater, &mut self.theater_viewport)
+        if self.theater_viewport.view_enabled.load(Ordering::Relaxed) {
+            theater_view::theater_view(
+                ctx,
+                &self.theater_viewport.content.lock().unwrap(),
+                &mut self.theater_viewport.view_enabled,
+            )
         }
 
-        if self.stage_viewport.load(Ordering::Relaxed) {
-            stage_view::stage_view(ctx, &self.stage, &mut self.stage_viewport)
+        if self.stage_viewport.view_enabled.load(Ordering::Relaxed) {
+            stage_view::stage_view(
+                ctx,
+                &self.stage_viewport.content.lock().unwrap(),
+                &mut self.stage_viewport.view_enabled,
+            )
         }
 
-        if self.poster_vieport.load(Ordering::Relaxed) {
-            poster_view::poster_view(ctx, &self.poster, &mut self.poster_vieport)
+        if self.poster_viewport.view_enabled.load(Ordering::Relaxed) {
+            poster_view::poster_view(
+                ctx,
+                &self.poster_viewport.content.lock().unwrap(),
+                &mut self.poster_viewport.view_enabled,
+            )
         }
 
-        if self.performance_actors_viewport.load(Ordering::Relaxed) {
+        if self
+            .performance_actor_viewport
+            .view_enabled
+            .load(Ordering::Relaxed)
+        {
             performance_actors_view::performance_actors_view(
                 ctx,
-                &self.performance_actors,
-                &mut self.performance_actors_viewport,
+                &self.performance_actor_viewport.content.lock().unwrap(),
+                &mut self.performance_actor_viewport.view_enabled,
             )
         }
 
@@ -400,12 +442,20 @@ impl eframe::App for TemplateApp {
             );
         }
 
-        if self.play_viewport.load(Ordering::Relaxed) {
-            play_view(ctx, &self.plays, &mut self.play_viewport)
+        if self.plays_viewport.view_enabled.load(Ordering::Relaxed) {
+            play_view::play_view(
+                ctx,
+                &self.plays_viewport.content.lock().unwrap(),
+                &mut self.plays_viewport.view_enabled,
+            )
         }
 
-        if self.performance_viewport.load(Ordering::Relaxed) {
-            performance_view(ctx, &self.performance, &mut self.performance_viewport)
+        if self.performance.view_enabled.load(Ordering::Relaxed) {
+            performance_view::performance_view(
+                ctx,
+                &self.performance.content.lock().unwrap(),
+                &mut self.performance.view_enabled,
+            )
         }
     }
 }

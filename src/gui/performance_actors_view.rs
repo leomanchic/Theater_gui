@@ -9,6 +9,19 @@ use crate::{
     dbworker::dbdriver,
     entity::{self},
 };
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct Performance_Actors_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::performance_actors::Model>>>,
+}
+impl Performance_Actors_View {
+    pub fn new() -> Performance_Actors_View {
+        Performance_Actors_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
 
 pub fn performance_actors_view(
     ctx: &egui::Context,

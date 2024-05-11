@@ -10,6 +10,20 @@ use crate::{
     entity::{self},
 };
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct Performance_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::performance::Model>>>,
+}
+impl Performance_View {
+    pub fn new() -> Performance_View {
+        Performance_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
 pub fn performance_view(
     ctx: &egui::Context,
     performance: &Vec<entity::performance::Model>,

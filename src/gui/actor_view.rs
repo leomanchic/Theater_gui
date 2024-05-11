@@ -1,28 +1,38 @@
-use std::sync::{atomic::{AtomicBool, Ordering}, Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 use egui_extras::{Column, TableBuilder};
+use sea_orm::EntityTrait;
 
-use crate::{dbworker::dbdriver, entity::{self}};
+use crate::{
+    dbworker::dbdriver,
+    entity::{self, prelude::ActorS},
+};
+
+//struct for View
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct ActorView{
+pub struct ActorView {
     pub view_enabled: Arc<AtomicBool>,
-    pub content: Arc<
-    Mutex<Vec<entity::actor::Model>>>,
+    pub content: Arc<Mutex<Vec<entity::actor::Model>>>,
 }
-impl  ActorView{
+impl ActorView {
     pub fn new() -> ActorView {
         ActorView {
             view_enabled: Arc::new(AtomicBool::new(false)),
-            content: Arc::new(Mutex::new(Vec::new()))
+            content: Arc::new(Mutex::new(Vec::new())),
         }
-
     }
 }
 
-
-pub fn actor_view(ctx: &egui::Context,actr: &Vec<entity::actor::Model>, actors_viewport: &mut Arc<AtomicBool>) {
-    let actors_viewport = actors_viewport.clone();
+pub fn actor_view(
+    ctx: &egui::Context,
+    actr: &Vec<entity::actor::Model>,
+    actors_viewport: &mut Arc<AtomicBool>,
+) {
+    let actors_viewport = Arc::clone(&actors_viewport);
     let actr = actr.clone();
     let name = Arc::new(Mutex::new(String::new()));
     let sn = Arc::new(Mutex::new(String::new()));
@@ -42,45 +52,60 @@ pub fn actor_view(ctx: &egui::Context,actr: &Vec<entity::actor::Model>, actors_v
                 let name = Arc::clone(&name);
                 let sn = Arc::clone(&sn);
                 let role = Arc::clone(&role);
-                egui::CollapsingHeader::new("Add actor")
-                    .show(ui, |ui| {
-                        
-                    
+                egui::CollapsingHeader::new("Add actor").show(ui, |ui| {
                     egui::Grid::new("some_unique_id").show(ui, |ui| {
-                    ui.label("Actor name:");
-                    // let response2 =
-                        ui.add_sized(ui.min_size(), egui::TextEdit::singleline(&mut *name.lock().unwrap()));
-                    ui.end_row();
-                    ui.label("Actor surname:");
-                    // let response1 = 
-                    ui.add_sized(
-                        ui.available_size(),
-                        egui::TextEdit::singleline(&mut *sn.lock().unwrap()),
-                    );
-                    ui.end_row();
-                    ui.label("Actor`s role:");
-                    let response = ui.add_sized(
-                        ui.available_size(),
-                        egui::TextEdit::singleline(&mut *role.lock().unwrap()),
-                    );
-                    if response.changed() {
-                        // …
-                    }
-                    if response.lost_focus()
-                        && ui.input(|i| i.key_pressed(egui::Key::Enter))
-                    {
-                        // …available_size()
-                        let  name = Arc::clone(&name);
-                        let  sn = Arc::clone(&sn);
-                        let  role = Arc::clone(&role);
-                        let runtime = tokio::runtime::Runtime::new();
-                        runtime.unwrap().block_on(async {
-                        dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();});
-                    }
-                    ui.end_row();
-                    // ui.label("Actor surname:");
-                    // ui.label("Actor`s role:");
-                });});
+                        ui.label("Actor name:");
+                        // let response2 =
+                        ui.add_sized(
+                            ui.min_size(),
+                            egui::TextEdit::singleline(&mut *name.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Actor surname:");
+                        // let response1 =
+                        ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *sn.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Actor`s role:");
+                        let response = ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *role.lock().unwrap()),
+                        );
+                        if response.changed() {
+                            // …
+                        }
+                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            // …available_size()
+                            let name = Arc::clone(&name);
+                            let sn: Arc<Mutex<String>> = Arc::clone(&sn);
+                            let role = Arc::clone(&role);
+                            let runtime = tokio::runtime::Runtime::new();
+                            runtime.unwrap().block_on(async {
+                                // let act = entity::actor::ActiveModel {
+                                //     name: sea_orm::ActiveValue::Set(Some(
+                                //         name.lock().unwrap().to_string(),
+                                //     )),
+                                //     surname: sea_orm::ActiveValue::Set(Some(
+                                //         sn.lock().unwrap().to_string(),
+                                //     )),
+                                //     role: sea_orm::ActiveValue::Set(Some(
+                                //         role.lock().unwrap().to_string(),
+                                //     )),
+                                //     ..Default::default()
+                                // };
+                                // ActorS::insert(act).exec(&db).await.unwrap();
+                                // dbdriver::actor_creator(&name, &sn, &role).await
+                                // dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();
+                            });
+                            // println!("{:?} {:?} {:? }", role, sn, name);
+                        }
+                        ui.end_row();
+                        // ui.label("Actor surname:");
+                        // ui.label("Actor`s role:");
+                    });
+                });
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     TableBuilder::new(ui)
@@ -128,6 +153,4 @@ pub fn actor_view(ctx: &egui::Context,actr: &Vec<entity::actor::Model>, actors_v
             }
         },
     );
-
-
 }

@@ -10,6 +10,21 @@ use crate::{
     entity::{self, theater},
 };
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct Theater_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::theater::Model>>>,
+}
+
+impl Theater_View {
+    pub fn new() -> Theater_View {
+        Theater_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
 pub fn theater_view(
     ctx: &egui::Context,
     theater: &Vec<entity::theater::Model>,

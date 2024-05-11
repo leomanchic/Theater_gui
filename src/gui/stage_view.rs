@@ -9,7 +9,21 @@ use crate::{
     dbworker::dbdriver,
     entity::{self},
 };
+#[derive(serde::Deserialize, serde::Serialize)]
 
+pub struct Stage_View {
+    pub view_enabled: Arc<AtomicBool>,
+    pub content: Arc<Mutex<Vec<entity::stage::Model>>>,
+}
+
+impl Stage_View {
+    pub fn new() -> Stage_View {
+        Stage_View {
+            view_enabled: Arc::new(AtomicBool::new(false)),
+            content: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
 pub fn stage_view(
     ctx: &egui::Context,
     stage: &Vec<entity::stage::Model>,
