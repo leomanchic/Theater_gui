@@ -1,16 +1,16 @@
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
+    Arc,
 };
 
-use eframe::{glow::Context, WindowBuilder};
-use egui::{FontData, FontDefinitions, ScrollArea, Vec2, Window};
+use eframe;
+use egui::{FontData, FontDefinitions, Vec2};
 
-use egui_extras::{Column, DatePickerButton, TableBuilder};
+// use egui_extras;
 use serde;
 use tokio;
 
-use crate::{dbworker::dbdriver, entity};
+use crate::dbworker::dbdriver;
 
 use super::{
     actor_view::{self, ActorView},
@@ -32,17 +32,17 @@ use super::{
 pub struct TemplateApp {
     // Example stuff:
     // #[serde(skip)] // This how you opt-out of serialization of a field
+    ticket_viewport: Ticket_View,
+    stage_viewport: Stage_View,
     // texts: Arc<Mutex<String>>,
     // actr: Arc<Vec<entity::actor::Model>>,
     actview: ActorView,
     performance_actor_viewport: Performance_Actors_View,
     performance: Performance_View,
-    ticket_viewport: Ticket_View,
     theater_viewport: Theater_View,
     viewer_viewport: Viewer_view,
     poster_viewport: Poster_View,
     plays_viewport: Plays_View,
-    stage_viewport: Stage_View,
     viewer_ticket_viewport: Viewer_Ticket_View,
     // ticket: Arc<Vec<entity::ticket::Model>>,
     // poster: Arc<Vec<entity::poster::Model>>,
@@ -199,11 +199,11 @@ impl eframe::App for TemplateApp {
             //     self.performance_actors_viewport.load(Ordering::Relaxed);
             let mut play_view = self.plays_viewport.view_enabled.load(Ordering::Relaxed);
             let mut poster_view = self.poster_viewport.view_enabled.load(Ordering::Relaxed);
-            let mut stage_view: bool = self.stage_viewport.view_enabled.load(Ordering::Relaxed);
-            let mut theater_view: bool = self.theater_viewport.view_enabled.load(Ordering::Relaxed);
-            let mut ticket_view: bool = self.ticket_viewport.view_enabled.load(Ordering::Relaxed);
-            let mut viewer_view: bool = self.viewer_viewport.view_enabled.load(Ordering::Relaxed);
-            let mut vticket_view: bool = self
+            let mut stage_view = self.stage_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut theater_view = self.theater_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut ticket_view = self.ticket_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut viewer_view = self.viewer_viewport.view_enabled.load(Ordering::Relaxed);
+            let mut vticket_view = self
                 .viewer_ticket_viewport
                 .view_enabled
                 .load(Ordering::Relaxed);

@@ -51,11 +51,15 @@ pub fn poster_view(
                         ui.end_row();
 
                         ui.label("start_date_s");
-                        // let mut date_s = date.lock().unwrap().get_or_insert_with(|| chrono::offset::Utc::now().date_naive());
+                        // let mut date_s = date_s
+                        //     .lock()
+                        //     .unwrap()
+                        //     .get_or_insert_with(|| chrono::offset::Utc::now().date_naive());
                         // let mut binding = date_s.lock().unwrap();
-                        // let mut  date_s = binding.get_or_insert_with(|| chrono::offset::Utc::now().date_naive());
+                        // let mut date_s =
+                        //     binding.get_or_insert_with(|| chrono::offset::Utc::now().date_naive());
                         // ui.add(egui_extras::DatePickerButton::new(&mut date_s));
-                        ui.end_row();
+                        // ui.end_row();
 
                         ui.label("end_date");
                         let mut bindi = date_e.lock().unwrap();

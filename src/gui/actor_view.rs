@@ -8,7 +8,7 @@ use sea_orm::EntityTrait;
 
 use crate::{
     dbworker::dbdriver,
-    entity::{self, prelude::ActorS},
+    entity::{self, prelude::Actor},
 };
 
 //struct for View
@@ -96,7 +96,7 @@ pub fn actor_view(
                                 //     ..Default::default()
                                 // };
                                 // ActorS::insert(act).exec(&db).await.unwrap();
-                                // dbdriver::actor_creator(&name, &sn, &role).await
+                                dbdriver::actor_creator(&name, &sn, &role).await
                                 // dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();
                             });
                             // println!("{:?} {:?} {:? }", role, sn, name);

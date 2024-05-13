@@ -12,7 +12,10 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+
 pub enum Relation {
+    #[sea_orm(has_many = "super::performance::Entity")]
+    Performance,
     #[sea_orm(
         belongs_to = "super::theater::Entity",
         from = "Column::TheaterId",
@@ -20,183 +23,19 @@ pub enum Relation {
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Theater23,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater22,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater21,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater20,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater19,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater18,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater17,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater16,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater15,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater14,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater13,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater12,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater11,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater10,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater9,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater8,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater7,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater6,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater5,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater4,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater3,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater2,
-    #[sea_orm(
-        belongs_to = "super::theater::Entity",
-        from = "Column::TheaterId",
-        to = "super::theater::Column::TheaterId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Theater1,
+    Theater,
+}
+
+impl Related<super::performance::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Performance.def()
+    }
+}
+
+impl Related<super::theater::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Theater.def()
+    }
 }
 
 impl ActiveModelBehavior for ActiveModel {}
