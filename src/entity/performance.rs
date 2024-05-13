@@ -2,7 +2,7 @@
 
 use sea_orm::entity::prelude::*;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "performance")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -14,6 +14,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::performance_actors::Entity")]
+    PerformanceActors,
     #[sea_orm(
         belongs_to = "super::play::Entity",
         from = "Column::PlayId",
@@ -21,183 +23,9 @@ pub enum Relation {
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Play23,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play22,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play21,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play20,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play19,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play18,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play17,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play16,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play15,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play14,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play13,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play12,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play11,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play10,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play9,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play8,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play7,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play6,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play5,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play4,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play3,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play2,
-    #[sea_orm(
-        belongs_to = "super::play::Entity",
-        from = "Column::PlayId",
-        to = "super::play::Column::PlayId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Play1,
+    Play,
+    #[sea_orm(has_many = "super::poster::Entity")]
+    Poster,
     #[sea_orm(
         belongs_to = "super::stage::Entity",
         from = "Column::StageId",
@@ -205,183 +33,39 @@ pub enum Relation {
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Stage23,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage22,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage21,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage20,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage19,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage18,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage17,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage16,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage15,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage14,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage13,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage12,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage11,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage10,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage9,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage8,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage7,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage6,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage5,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage4,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage3,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage2,
-    #[sea_orm(
-        belongs_to = "super::stage::Entity",
-        from = "Column::StageId",
-        to = "super::stage::Column::StageId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Stage1,
+    Stage,
+    #[sea_orm(has_many = "super::ticket::Entity")]
+    Ticket,
+}
+
+impl Related<super::performance_actors::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PerformanceActors.def()
+    }
+}
+
+impl Related<super::play::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Play.def()
+    }
+}
+
+impl Related<super::poster::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Poster.def()
+    }
+}
+
+impl Related<super::stage::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Stage.def()
+    }
+}
+
+impl Related<super::ticket::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Ticket.def()
+    }
 }
 
 impl ActiveModelBehavior for ActiveModel {}

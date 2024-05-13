@@ -15,7 +15,9 @@ use crate::entity::prelude::{
 
 use crate::entity;
 
-const DATABASE_URL: &str = "postgres://postgres:postgres@localhost/Theatre";
+const DATABASE_URL: &str = "postgres://postgres:eva1@localhost/Theatre";
+//postgresql://[postgres[:postgres]@][localhost][:5432][/Theatre]
+//"host=localhost port=5432 dbname=Theatre user=postgres sslmode=prefer connect_timeout=10
 const CONF: &str = "host=localhost user=postgres dbname='Theatre' password=postgres";
 
 // thread_local!(static CONF: String  = env::var("DATABASE_CONF").unwrap());
@@ -30,7 +32,7 @@ pub async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
 pub async fn get_actors() -> Result<Vec<entity::actor::Model>, Box<dyn Error>> {
     let db = match sea_connection().await {
         Ok(db) => db,
-        Err(err) => panic!("{}", "Error on actors get"),
+        Err(err) => panic!("{err} {}", "Error on actors get"),
     };
     let actors: Vec<entity::actor::Model> = ActorS::find()
         // .filter(entity::actor::Column::Name.contains("chocolate"))
