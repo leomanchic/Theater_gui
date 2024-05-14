@@ -12,5 +12,6 @@ mod poster_view;
 mod stage_view;
 mod theater_view;
 mod ticket_view;
+mod time;
 mod viewer_ticket_view;
 mod viewer_view;

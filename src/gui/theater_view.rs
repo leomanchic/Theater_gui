@@ -32,6 +32,9 @@ pub fn theater_view(
 ) {
     let theater_viewport = theater_viewport.clone();
     let theater = theater.clone();
+    let name = Arc::new(Mutex::new(String::new()));
+    let address = Arc::new(Mutex::new(String::new()));
+    let capacity = Arc::new(Mutex::new(String::new()));
     ctx.show_viewport_deferred(
         egui::ViewportId::from_hash_of("theater"),
         egui::ViewportBuilder::default()
@@ -44,6 +47,60 @@ pub fn theater_view(
             );
 
             egui::CentralPanel::default().show(ctx, |ui| {
+                egui::CollapsingHeader::new("Add Theater").show(ui, |ui| {
+                    egui::Grid::new("some_unique_id").show(ui, |ui| {
+                        ui.label("Name:");
+                        // let response2 =
+                        ui.add_sized(
+                            ui.min_size(),
+                            egui::TextEdit::singleline(&mut *name.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Adress:");
+                        // let response1 =
+                        ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *address.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Capacity");
+                        let response = ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *capacity.lock().unwrap()),
+                        );
+
+                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            let runtime = tokio::runtime::Runtime::new();
+                            runtime.unwrap().block_on(async {
+                                // let act = entity::actor::ActiveModel {
+                                //     name: sea_orm::ActiveValue::Set(Some(
+                                //         name.lock().unwrap().to_string(),
+                                //     )),
+                                //     surname: sea_orm::ActiveValue::Set(Some(
+                                //         sn.lock().unwrap().to_string(),
+                                //     )),
+                                //     role: sea_orm::ActiveValue::Set(Some(
+                                //         role.lock().unwrap().to_string(),
+                                //     )),
+                                //     ..Default::default()
+                                // };
+                                // ActorS::insert(act).exec(&db).await.unwrap();
+                                dbdriver::theater_creator(
+                                    &*name.lock().unwrap(),
+                                    &*address.lock().unwrap(),
+                                    &capacity.lock().unwrap(),
+                                )
+                                .await
+                                // dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();
+                            });
+                            // println!("{:?} {:?} {:? }", role, sn, name);
+                        }
+                        ui.end_row();
+                        // ui.label("Actor surname:");
+                        // ui.label("Actor`s role:");
+                    });
+                });
+
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     TableBuilder::new(ui)
                         .column(Column::auto().resizable(true))

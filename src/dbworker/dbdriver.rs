@@ -52,7 +52,7 @@ pub async fn get_tickets() -> Result<Vec<entity::ticket::Model>, Box<dyn Error>>
         // .order_by_asc(entity::theater::Column::TheaterId)
         .all(&db)
         .await?;
-    println!("{:?}", ticket);
+    // println!("{:?}", ticket);
     Ok(ticket)
 }
 pub async fn get_theaters() -> Result<Vec<entity::theater::Model>, Box<dyn Error>> {
@@ -214,6 +214,45 @@ pub async fn stage_creator(theater_id: &Arc<Mutex<String>>, capacity: &Arc<Mutex
     Stage::insert(per).exec(&db).await.unwrap();
 }
 
+pub async fn theater_creator(name: &str, address: &str, capacity: &str) {
+    let db = sea_connection().await.unwrap();
+    let per = entity::theater::ActiveModel {
+        name: sea_orm::ActiveValue::Set(Some(name.to_string())),
+        address: sea_orm::ActiveValue::Set(Some(address.to_string())),
+        capacity: sea_orm::ActiveValue::Set(Some(capacity.parse::<i32>().unwrap())),
+
+        // start_datetime: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().unwrap())),
+        ..Default::default()
+    };
+    Theater::insert(per).exec(&db).await.unwrap();
+}
+
+pub async fn ticket_creator(
+    per_id: &Arc<Mutex<String>>,
+    seat_num: &Arc<Mutex<String>>,
+    date: Arc<&mut NaiveDate>,
+    cost: &Arc<Mutex<String>>,
+    status: &Arc<Mutex<String>>,
+) -> Result<(), Box<dyn Error>> {
+    let db = sea_connection().await.unwrap();
+    let per = entity::ticket::ActiveModel {
+        performance_id: sea_orm::ActiveValue::Set(Some(
+            per_id.lock().unwrap().parse::<i32>().unwrap(),
+        )),
+        seat_number: sea_orm::ActiveValue::Set(Some(
+            seat_num.lock().unwrap().parse::<i32>().unwrap(),
+        )),
+        date: sea_orm::ActiveValue::Set(Some(**date)),
+        cost: sea_orm::ActiveValue::Set(Some(cost.lock().unwrap().parse::<i32>().unwrap())),
+        status: sea_orm::ActiveValue::Set(Some(status.lock().unwrap().to_string())),
+
+        // start_datetime: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().unwrap())),
+        ..Default::default()
+    };
+    Ticket::insert(per).exec(&db).await.unwrap();
+    Ok(())
+}
+
 pub async fn writer(statment: String) -> Result<(), Box<dyn Error>> {
     let (client, connection) = tokio_postgres::connect(&CONF, NoTls).await?;
 
@@ -249,7 +288,7 @@ pub async fn rsql_executor(statment: String) -> Result<String, Box<dyn Error>> {
 
     match query_res_vec {
         Ok(c) => {
-            let r = format!("{:?}", c);
+            let r = format!("successful {:?}", c);
             Ok(r)
         }
         Err(k) => Ok(format! {"Error {k}"}),

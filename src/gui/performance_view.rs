@@ -5,10 +5,7 @@ use std::sync::{
 
 use egui_extras::{Column, TableBuilder};
 
-use crate::{
-    dbworker::dbdriver,
-    entity::{self},
-};
+use crate::{dbworker::dbdriver, entity, gui::time};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Performance_View {
@@ -54,6 +51,7 @@ pub fn performance_view(
 
                 egui::CollapsingHeader::new("Add performance").show(ui, |ui| {
                     egui::Grid::new("some_unique_id").show(ui, |ui| {
+                        time::time_piker(ui);
                         ui.label("Play ID:");
                         // let response2 =
                         ui.add_sized(

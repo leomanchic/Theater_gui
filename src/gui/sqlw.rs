@@ -16,7 +16,7 @@ pub fn sqlwtool(ctx: &egui::Context, refrsql: &mut Arc<AtomicBool>) {
             .with_inner_size([200.0, 100.0]),
         move |ctx, class| {
             egui::CentralPanel::default().show(ctx, |ui| {
-                ui.label("Raw SQL querry writer");
+                ui.heading("Raw SQL querry writer and executor");
                 egui::CollapsingHeader::new("querry").show(ui, |ui| {
                     let response = ui.add_sized(
                         ui.available_size(),
@@ -38,7 +38,7 @@ pub fn sqlwtool(ctx: &egui::Context, refrsql: &mut Arc<AtomicBool>) {
                 egui::CollapsingHeader::new("result").show(ui, |ui| {
                     let response = ui.add_sized(
                         ui.available_size(),
-                        egui::TextEdit::singleline(&mut *result.lock().unwrap()),
+                        egui::TextEdit::multiline(&mut *result.lock().unwrap()),
                     );
 
                     // if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
