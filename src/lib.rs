@@ -1,9 +1,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 
-//App appirience
+/// App appirience
 mod gui;
-pub use gui::app::TemplateApp;
-//Working with database
+pub use gui::app::App;
+/// Working with database
 mod dbworker;
 pub use dbworker::dbdriver::writer;
 pub use dbworker::querry;

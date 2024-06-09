@@ -7,18 +7,18 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::{
     dbworker::dbdriver,
-    entity::{self, theater},
+    entity::{self},
 };
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct Theater_View {
+pub struct TheaterView {
     pub view_enabled: Arc<AtomicBool>,
     pub content: Arc<Mutex<Vec<entity::theater::Model>>>,
 }
 
-impl Theater_View {
-    pub fn new() -> Theater_View {
-        Theater_View {
+impl TheaterView {
+    pub fn new() -> TheaterView {
+        TheaterView {
             view_enabled: Arc::new(AtomicBool::new(false)),
             content: Arc::new(Mutex::new(Vec::new())),
         }
@@ -50,14 +50,12 @@ pub fn theater_view(
                 egui::CollapsingHeader::new("Add Theater").show(ui, |ui| {
                     egui::Grid::new("some_unique_id").show(ui, |ui| {
                         ui.label("Name:");
-                        // let response2 =
                         ui.add_sized(
                             ui.min_size(),
                             egui::TextEdit::singleline(&mut *name.lock().unwrap()),
                         );
                         ui.end_row();
                         ui.label("Adress:");
-                        // let response1 =
                         ui.add_sized(
                             ui.available_size(),
                             egui::TextEdit::singleline(&mut *address.lock().unwrap()),
@@ -72,32 +70,15 @@ pub fn theater_view(
                         if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                             let runtime = tokio::runtime::Runtime::new();
                             runtime.unwrap().block_on(async {
-                                // let act = entity::actor::ActiveModel {
-                                //     name: sea_orm::ActiveValue::Set(Some(
-                                //         name.lock().unwrap().to_string(),
-                                //     )),
-                                //     surname: sea_orm::ActiveValue::Set(Some(
-                                //         sn.lock().unwrap().to_string(),
-                                //     )),
-                                //     role: sea_orm::ActiveValue::Set(Some(
-                                //         role.lock().unwrap().to_string(),
-                                //     )),
-                                //     ..Default::default()
-                                // };
-                                // ActorS::insert(act).exec(&db).await.unwrap();
-                                dbdriver::theater_creator(
+                                                         dbdriver::theater_creator(
                                     &*name.lock().unwrap(),
                                     &*address.lock().unwrap(),
                                     &capacity.lock().unwrap(),
                                 )
                                 .await
-                                // dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();
                             });
-                            // println!("{:?} {:?} {:? }", role, sn, name);
                         }
                         ui.end_row();
-                        // ui.label("Actor surname:");
-                        // ui.label("Actor`s role:");
                     });
                 });
 

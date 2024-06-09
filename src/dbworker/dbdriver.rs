@@ -19,10 +19,7 @@ use crate::entity;
 const DATABASE_URL: &str = "postgres://postgres:postgres@localhost/Theatre";
 const CONF: &str = "host=localhost user=postgres dbname='Theatre' password=postgres";
 
-// thread_local!(static CONF: String  = env::var("DATABASE_CONF").unwrap());
-//
-
-pub async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
+async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
     let db = Database::connect(DATABASE_URL).await?;
 
     Ok(db)
@@ -31,7 +28,7 @@ pub async fn sea_connection() -> Result<DatabaseConnection, DbErr> {
 pub async fn get_actors() -> Result<Vec<entity::actor::Model>, Box<dyn Error>> {
     let db = match sea_connection().await {
         Ok(db) => db,
-        Err(err) => panic!("{}", "Error on actors get"),
+        Err(err) => panic!("Error on actors get {err}"),
     };
     let actors: Vec<entity::actor::Model> = Actor::find()
         // .filter(entity::actor::Column::Name.contains("chocolate"))
@@ -45,7 +42,7 @@ pub async fn get_actors() -> Result<Vec<entity::actor::Model>, Box<dyn Error>> {
 pub async fn get_tickets() -> Result<Vec<entity::ticket::Model>, Box<dyn Error>> {
     let db = match sea_connection().await {
         Ok(db) => db,
-        Err(err) => panic!("{}", "Error on tickets get"),
+        Err(err) => panic!("Error on tickets get{err}"),
     };
     let ticket: Vec<entity::ticket::Model> = Ticket::find()
         // .filter(entity::actor::Column::Name.contains("chocolate"))
@@ -58,7 +55,7 @@ pub async fn get_tickets() -> Result<Vec<entity::ticket::Model>, Box<dyn Error>>
 pub async fn get_theaters() -> Result<Vec<entity::theater::Model>, Box<dyn Error>> {
     let db = match sea_connection().await {
         Ok(db) => db,
-        Err(err) => panic!("{}", "Error on theaters get"),
+        Err(err) => panic!("Error on theaters get {err}"),
     };
 
     let theaters: Vec<entity::theater::Model> = Theater::find().all(&db).await?;
@@ -142,15 +139,15 @@ pub async fn actor_creator(
 }
 
 pub async fn performance_creator(
-    name: &Arc<Mutex<String>>,
-    surmame: &Arc<Mutex<String>>,
-    role: &Arc<Mutex<std::option::Option<NaiveDate>>>,
+    play_id: &Arc<Mutex<String>>,
+    stage_id: &Arc<Mutex<String>>,
+    date: Option<NaiveDateTime>,
 ) -> () {
     let db = sea_connection().await.unwrap();
     let per = entity::performance::ActiveModel {
-        play_id: sea_orm::ActiveValue::Set(Some(name.lock().unwrap().parse::<i32>().unwrap())),
-        stage_id: sea_orm::ActiveValue::Set(Some(surmame.lock().unwrap().parse::<i32>().unwrap())),
-        // start_datetime: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().unwrap())),
+        play_id: sea_orm::ActiveValue::Set(Some(play_id.lock().unwrap().parse::<i32>().unwrap())),
+        stage_id: sea_orm::ActiveValue::Set(Some(stage_id.lock().unwrap().parse::<i32>().unwrap())),
+        start_datetime: sea_orm::ActiveValue::Set(date),
         ..Default::default()
     };
     Performance::insert(per).exec(&db).await.unwrap();
@@ -201,6 +198,25 @@ pub async fn play_creator(
     Ok(())
 }
 
+pub async fn viewer_creator(name: &str, email: &str, phone: &str) {
+    let db = sea_connection().await.unwrap();
+    let vie = entity::viewer::ActiveModel {
+        name: sea_orm::ActiveValue::Set(Some(name.to_string())),
+        email: sea_orm::ActiveValue::Set(Some(email.to_string())),
+        phone: sea_orm::ActiveValue::Set(Some(phone.to_string())),
+        ..Default::default()
+    };
+    let responce = Viewer::insert(vie).exec(&db).await;
+    match responce {
+        Ok(c) => {
+            println!("succesful insertion {:?}", c)
+        }
+        Err(err) => {
+            println!("Error {} occured!", err)
+        }
+    }
+}
+
 pub async fn stage_creator(theater_id: &Arc<Mutex<String>>, capacity: &Arc<Mutex<String>>) {
     let db = sea_connection().await.unwrap();
     let per = entity::stage::ActiveModel {
@@ -211,7 +227,15 @@ pub async fn stage_creator(theater_id: &Arc<Mutex<String>>, capacity: &Arc<Mutex
         // start_datetime: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().unwrap())),
         ..Default::default()
     };
-    Stage::insert(per).exec(&db).await.unwrap();
+    let responce = Stage::insert(per).exec(&db).await;
+    match responce {
+        Ok(c) => {
+            println!("succesful insertion {:?}", c)
+        }
+        Err(err) => {
+            println!("Error {} occured!", err)
+        }
+    }
 }
 
 pub async fn theater_creator(name: &str, address: &str, capacity: &str) {
@@ -230,9 +254,8 @@ pub async fn theater_creator(name: &str, address: &str, capacity: &str) {
 pub async fn ticket_creator(
     per_id: &Arc<Mutex<String>>,
     seat_num: &Arc<Mutex<String>>,
-    date: Arc<&mut NaiveDate>,
     cost: &Arc<Mutex<String>>,
-    status: &Arc<Mutex<String>>,
+    status: &String,
 ) -> Result<(), Box<dyn Error>> {
     let db = sea_connection().await.unwrap();
     let per = entity::ticket::ActiveModel {
@@ -242,15 +265,24 @@ pub async fn ticket_creator(
         seat_number: sea_orm::ActiveValue::Set(Some(
             seat_num.lock().unwrap().parse::<i32>().unwrap(),
         )),
-        date: sea_orm::ActiveValue::Set(Some(**date)),
         cost: sea_orm::ActiveValue::Set(Some(cost.lock().unwrap().parse::<i32>().unwrap())),
-        status: sea_orm::ActiveValue::Set(Some(status.lock().unwrap().to_string())),
+        status: sea_orm::ActiveValue::Set(Some(status.clone())),
 
         // start_datetime: sea_orm::ActiveValue::Set(Some(role.lock().unwrap().unwrap())),
         ..Default::default()
     };
     Ticket::insert(per).exec(&db).await.unwrap();
     Ok(())
+}
+pub async fn viewer_ticket_creator(vi_id: &str, ti_id: &str) {
+    let db = sea_connection().await.unwrap();
+    let per: entity::viewer_ticket::ActiveModel = entity::viewer_ticket::ActiveModel {
+        viewer_viewer_id: sea_orm::ActiveValue::Set(vi_id.parse::<i32>().unwrap()),
+        ticket_ticket_id: sea_orm::ActiveValue::Set(ti_id.parse::<i32>().unwrap()),
+        ..Default::default()
+    };
+    ViewerTicket::insert(per).exec(&db).await.unwrap();
+    println!("OK");
 }
 
 pub async fn writer(statment: String) -> Result<(), Box<dyn Error>> {
@@ -266,15 +298,8 @@ pub async fn writer(statment: String) -> Result<(), Box<dyn Error>> {
     client.execute(&statment, &[]).await?;
     Ok(())
 }
-
+pub async fn poster_creator() {}
 pub async fn rsql_executor(statment: String) -> Result<String, Box<dyn Error>> {
-    // todo!("psql functionality");
-
-    // let db = sea_connection().await.unwrap();
-    // let query_res_vec = db
-    //     .query_all(Statement::from_string(DatabaseBackend::Postgres, &statment))
-    //     .await;
-
     let (client, connection) = tokio_postgres::connect(&CONF, NoTls).await?;
 
     tokio::spawn(async move {
@@ -282,7 +307,6 @@ pub async fn rsql_executor(statment: String) -> Result<String, Box<dyn Error>> {
             eprintln!("connection error: {}", e);
         }
     });
-    // let vec_of_to_sql: Vec<&(dyn ToSql + Sync)> = params.iter().map(|s| s as &(dyn ToSql + Sync)).collect();
 
     let query_res_vec = client.query(&statment, &[]).await;
 

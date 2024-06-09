@@ -6,7 +6,6 @@ use std::sync::{
 use eframe;
 use egui::{FontData, FontDefinitions, Vec2};
 
-// use egui_extras;
 use serde;
 use tokio;
 
@@ -15,77 +14,64 @@ use crate::dbworker::dbdriver;
 use super::{
     actor_view::{self, ActorView},
     performance_actors_view::{self, Performance_Actors_View},
-    performance_view::{self, Performance_View},
+    performance_view::{self, PerformanceView},
     play_view::{self, Plays_View},
     poster_view::{self, Poster_View},
     sqlw,
     stage_view::{self, Stage_View},
-    theater_view::{self, Theater_View},
-    ticket_view::{self, Ticket_View},
-    viewer_ticket_view::{self, Viewer_Ticket_View},
-    viewer_view::{self, Viewer_view},
+    theater_view::{self, TheaterView},
+    ticket_view::{self, TicketView},
+    viewer_ticket_view::{self, ViewerTicketView},
+    viewer_view::{self, ViewerView},
 };
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
-pub struct TemplateApp {
-    // Example stuff:
+pub struct App {
     // #[serde(skip)] // This how you opt-out of serialization of a field
-    ticket_viewport: Ticket_View,
+    tables: Vec<String>,
+    ticket_viewport: TicketView,
     stage_viewport: Stage_View,
-    // texts: Arc<Mutex<String>>,
-    // actr: Arc<Vec<entity::actor::Model>>,
+
     actview: ActorView,
     performance_actor_viewport: Performance_Actors_View,
-    performance: Performance_View,
-    theater_viewport: Theater_View,
-    viewer_viewport: Viewer_view,
+    performance: PerformanceView,
+    theater_viewport: TheaterView,
+    viewer_viewport: ViewerView,
     poster_viewport: Poster_View,
     plays_viewport: Plays_View,
-    viewer_ticket_viewport: Viewer_Ticket_View,
-    // ticket: Arc<Vec<entity::ticket::Model>>,
-    // poster: Arc<Vec<entity::poster::Model>>,
-    // performance_actors: Arc<Vec<entity::performance_actors::Model>>,
-
-    // actors_viewport: Arc<AtomicBool>,
-    // performance_viewport: Arc<AtomicBool>,
-    // performance_actors_viewport: Arc<AtomicBool>,
-    // stage_viewport: Arc<AtomicBool>,
-    // ticket_viewport: Arc<AtomicBool>,
-    // theater_viewport: Arc<AtomicBool>,
-    // viewer_viewport: Arc<AtomicBool>,
+    viewer_ticket_viewport: ViewerTicketView,
 
     // views: Views,
-    tables: Vec<String>,
     rsql: Arc<AtomicBool>,
 }
 
-impl Default for TemplateApp {
+impl Default for App {
     fn default() -> Self {
         Self {
             // Init stuff:
             actview: ActorView::new(),
             performance_actor_viewport: Performance_Actors_View::new(),
-            performance: Performance_View::new(),
-            ticket_viewport: Ticket_View::new(),
-            theater_viewport: Theater_View::new(),
-            viewer_viewport: Viewer_view::new(),
+            performance: PerformanceView::new(),
+            ticket_viewport: TicketView::new(),
+            theater_viewport: TheaterView::new(),
+            viewer_viewport: ViewerView::new(),
             plays_viewport: Plays_View::new(),
             poster_viewport: Poster_View::new(),
             stage_viewport: Stage_View::new(),
-            viewer_ticket_viewport: Viewer_Ticket_View::new(),
+            viewer_ticket_viewport: ViewerTicketView::new(),
             tables: vec![
-                "actor".to_owned(),
-                "performance".to_owned(),
-                "performance_actors".to_owned(),
-                "play".to_owned(),
-                "posters".to_owned(),
-                "stage".to_owned(),
-                "theater".to_owned(),
-                "ticket".to_owned(),
-                "viewer".to_owned(),
-                "viewer_ticket".to_owned(),
+                "Actor".to_owned(),
+                "Performance".to_owned(),
+                "Performance Actors".to_owned(),
+                "Play".to_owned(),
+                "Posters".to_owned(),
+                "Stage".to_owned(),
+                "Theater".to_owned(),
+                "Ticket".to_owned(),
+                "Viewer".to_owned(),
+                "Viewer Ticket".to_owned(),
             ],
             rsql: Arc::new(AtomicBool::new(false)),
         }
@@ -119,7 +105,7 @@ fn setup_custom_fonts(ctx: &egui::Context) {
     ctx.set_fonts(fonts);
 }
 
-impl TemplateApp {
+impl App {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -141,7 +127,7 @@ impl TemplateApp {
     }
 }
 
-impl eframe::App for TemplateApp {
+impl eframe::App for App {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
@@ -182,7 +168,7 @@ impl eframe::App for TemplateApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("Database");
+            ui.heading("Theatre DB");
             // let v: Vec<String> = vec!["actor".to_owned(),"performance".to_owned(),"performance_actors".to_owned(),"
             // play".to_owned(),"posters".to_owned(),"stage".to_owned(),"theater".to_owned(),"ticket".to_owned(),
             // "viewer".to_owned(),"viewer_ticket".to_owned()];

@@ -49,7 +49,7 @@ pub fn performance_actors_view(
             );
 
             egui::CentralPanel::default().show(ctx, |ui| {
-                egui::CollapsingHeader::new("Add performance").show(ui, |ui| {
+                egui::CollapsingHeader::new("Add actors for performance").show(ui, |ui| {
                     egui::Grid::new("some_unique_id").show(ui, |ui| {
                         ui.label("Performance-id");
                         // let response2 =

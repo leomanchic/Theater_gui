@@ -9,14 +9,3 @@ pub use super::theater::Entity as Theater;
 pub use super::ticket::Entity as Ticket;
 pub use super::viewer::Entity as Viewer;
 pub use super::viewer_ticket::Entity as ViewerTicket;
-
-// pub use super::actor::Entity as ActorS;
-// pub use super::performance::Entity as PerformanceS;
-// pub use super::performance_actors::Entity as PerformanceActorsS;
-// pub use super::play::Entity as PlayS;
-// pub use super::poster::Entity as PosterS;
-// pub use super::stage::Entity as StageS;
-// pub use super::theater::Entity as TheaterS;
-// pub use super::ticket::Entity as TicketS;
-// pub use super::viewer::Entity as ViewerS;
-// pub use super::viewer_ticket::Entity as ViewerTicketS;

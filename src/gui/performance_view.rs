@@ -3,18 +3,19 @@ use std::sync::{
     Arc, Mutex,
 };
 
+use chrono::NaiveDateTime;
 use egui_extras::{Column, TableBuilder};
 
-use crate::{dbworker::dbdriver, entity, gui::time};
+use crate::{dbworker::dbdriver, entity};
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct Performance_View {
+pub struct PerformanceView {
     pub view_enabled: Arc<AtomicBool>,
     pub content: Arc<Mutex<Vec<entity::performance::Model>>>,
 }
-impl Performance_View {
-    pub fn new() -> Performance_View {
-        Performance_View {
+impl PerformanceView {
+    pub fn new() -> PerformanceView {
+        PerformanceView {
             view_enabled: Arc::new(AtomicBool::new(false)),
             content: Arc::new(Mutex::new(Vec::new())),
         }
@@ -28,11 +29,10 @@ pub fn performance_view(
 ) {
     let performance_viewport = performance_viewport.clone();
     let performance = performance.clone();
-    // let pl_id: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
     let pl_id: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
     let st_id: Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
     let st_da_ti: Arc<Mutex<Option<chrono::NaiveDate>>> = Arc::new(Mutex::new(None));
-
+    let time = Arc::new(Mutex::new(0f32));
     ctx.show_viewport_deferred(
         egui::ViewportId::from_hash_of("performance"),
         egui::ViewportBuilder::default()
@@ -45,23 +45,20 @@ pub fn performance_view(
             );
 
             egui::CentralPanel::default().show(ctx, |ui| {
-                let pl_id = Arc::clone(&pl_id);
-                let st_id = Arc::clone(&st_id);
-                let st_da_ti = Arc::clone(&st_da_ti);
-
                 egui::CollapsingHeader::new("Add performance").show(ui, |ui| {
-                    egui::Grid::new("some_unique_id").show(ui, |ui| {
-                        time::time_piker(ui);
+                    egui::Grid::new("performance_unique_id").show(ui, |ui| {
+                        // time::time_piker(ui);
+
                         ui.label("Play ID:");
                         // let response2 =
                         ui.add_sized(
-                            ui.min_size(),
+                            ui.available_size(),
                             egui::TextEdit::singleline(&mut *pl_id.lock().unwrap()),
                         );
                         ui.end_row();
                         ui.label("Stage ID:");
                         // let response1 =
-                        let response = ui.add_sized(
+                        ui.add_sized(
                             ui.available_size(),
                             egui::TextEdit::singleline(&mut *st_id.lock().unwrap()),
                         );
@@ -71,35 +68,54 @@ pub fn performance_view(
                         let mut date_ =
                             bindi.get_or_insert_with(|| chrono::offset::Utc::now().date_naive());
                         ui.add(egui_extras::DatePickerButton::new(&mut date_));
+                        let res: egui::Response = ui.add(
+                            egui::DragValue::new(&mut *time.lock().unwrap())
+                                .clamp_range(0..=((60 * 60 * 24) - 1))
+                                .custom_formatter(|n, _| {
+                                    let n = n as i32;
+                                    let hours = n / (60 * 60);
+                                    let mins = (n / 60) % 60;
+                                    let secs = n % 60;
 
-                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                            // …available_size()
-                            let pl_id: Arc<Mutex<String>> = Arc::clone(&pl_id);
-                            let st_id: Arc<Mutex<String>> = Arc::clone(&st_id);
-                            let st_da_ti = Arc::clone(&st_da_ti);
+                                    // println!("{} {} {}", hours, mins, secs);
+                                    format!("{hours:02}:{mins:02}:{secs:02}")
+                                })
+                                .custom_parser(|s| {
+                                    let parts: Vec<&str> = s.split(':').collect();
+                                    if parts.len() == 3 {
+                                        parts[0]
+                                            .parse::<i32>()
+                                            .and_then(|h| {
+                                                parts[1].parse::<i32>().and_then(|m| {
+                                                    parts[2].parse::<i32>().map(|s| {
+                                                        // println!{"{}, {}, {}",h,m,s};
+                                                        ((h * 60 * 60) + (m * 60) + s) as f64
+                                                    })
+                                                })
+                                            })
+                                            .ok()
+                                    } else {
+                                        None
+                                    }
+                                }),
+                        );
+                        if res.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            let time = *time.lock().unwrap();
+                            let m = bindi
+                                .unwrap()
+                                .and_hms_opt(
+                                    (time / (60f32 * 60f32)) as u32,
+                                    ((time / 60f32) % 60f32) as u32,
+                                    (time % 60f32) as u32,
+                                )
+                                .unwrap();
+
                             let runtime = tokio::runtime::Runtime::new();
                             runtime.unwrap().block_on(async {
-                                // let act = entity::actor::ActiveModel {
-                                //     name: sea_orm::ActiveValue::Set(Some(
-                                //         name.lock().unwrap().to_string(),
-                                //     )),
-                                //     surname: sea_orm::ActiveValue::Set(Some(
-                                //         sn.lock().unwrap().to_string(),
-                                //     )),
-                                //     role: sea_orm::ActiveValue::Set(Some(
-                                //         role.lock().unwrap().to_string(),
-                                //     )),
-                                //     ..Default::default()
-                                // };
-                                // ActorS::insert(act).exec(&db).await.unwrap();
-                                dbdriver::performance_creator(&pl_id, &st_id, &st_da_ti).await
-                                // dbdriver::writer(format!{"insert into actor(name,surname,role) values ('{}', '{}', '{}');", *name.lock().unwrap(),*sn.lock().unwrap(),*role.lock().unwrap()}).await.unwrap();
+                                dbdriver::performance_creator(&pl_id, &st_id, Some(m)).await
                             });
-                            // println!("{:?} {:?} {:? }", role, sn, name);
                         }
                         ui.end_row();
-                        // ui.label("Actor surname:");
-                        // ui.label("Actor`s role:");
                     });
                 });
                 egui::ScrollArea::vertical().show(ui, |ui| {

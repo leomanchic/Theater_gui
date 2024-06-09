@@ -7,18 +7,18 @@ use egui_extras::{Column, TableBuilder};
 
 use crate::{
     dbworker::dbdriver,
-    entity::{self, theater},
+    entity::{self},
 };
 #[derive(serde::Deserialize, serde::Serialize)]
 
-pub struct Viewer_view {
+pub struct ViewerView {
     pub view_enabled: Arc<AtomicBool>,
     pub content: Arc<Mutex<Vec<entity::viewer::Model>>>,
 }
 
-impl Viewer_view {
-    pub fn new() -> Viewer_view {
-        Viewer_view {
+impl ViewerView {
+    pub fn new() -> ViewerView {
+        ViewerView {
             view_enabled: Arc::new(AtomicBool::new(false)),
             content: Arc::new(Mutex::new(Vec::new())),
         }
@@ -32,6 +32,9 @@ pub fn viewer_view(
 ) {
     let viewer_viewport = viewer_viewport.clone();
     let viewer = viewer.clone();
+    let name = Arc::new(Mutex::new(String::new()));
+    let email = Arc::new(Mutex::new(String::new()));
+    let phone = Arc::new(Mutex::new(String::new()));
     ctx.show_viewport_deferred(
         egui::ViewportId::from_hash_of("viewer"),
         egui::ViewportBuilder::default()
@@ -44,6 +47,43 @@ pub fn viewer_view(
             );
 
             egui::CentralPanel::default().show(ctx, |ui| {
+                egui::CollapsingHeader::new("Add Viewer").show(ui, |ui| {
+                    egui::Grid::new("viewer_unique_id").show(ui, |ui| {
+                        ui.label("Name:");
+                        // let response2 =
+                        ui.add_sized(
+                            ui.min_size(),
+                            egui::TextEdit::singleline(&mut *name.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Email:");
+                        // let response1 =
+                        ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *email.lock().unwrap()),
+                        );
+                        ui.end_row();
+                        ui.label("Phone");
+                        let response = ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::singleline(&mut *phone.lock().unwrap()),
+                        );
+
+                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            let runtime = tokio::runtime::Runtime::new();
+                            runtime.unwrap().block_on(async {
+                                dbdriver::viewer_creator(
+                                    &*name.lock().unwrap(),
+                                    &*email.lock().unwrap(),
+                                    &phone.lock().unwrap(),
+                                )
+                                .await
+                            });
+                        }
+                        ui.end_row();
+                    });
+                });
+
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     TableBuilder::new(ui)
                         .columns(Column::auto().resizable(true), 4usize)
